@@ -302,7 +302,7 @@ function hit(p){const L=mine[cur]||[],pw=chart.timeScale().width(),T=7;for(let i
  return -1}
 const ov=$('#ov'),ctx=ov.getContext('2d');
 const dash=st=>ctx.setLineDash(st===2?[6,5]:st===1?[2,3]:[]);
-function tag(y,price,color,pw){const txt=fmt(price,DATA.sym[cur].dec);ctx.font='11px sans-serif';const w=ctx.measureText(txt).width+8;ctx.fillStyle=color;ctx.fillRect(pw+1,y-8,w,16);ctx.fillStyle='#fff';ctx.textAlign='left';ctx.textBaseline='middle';ctx.fillText(txt,pw+5,y)}
+let TQ=null;function tag(y,price,color,pw){if(TQ){TQ.push([y,price,color,pw]);return}const txt=fmt(price,DATA.sym[cur].dec);ctx.font='11px sans-serif';const w=ctx.measureText(txt).width+8;ctx.fillStyle=color;ctx.fillRect(pw+1,y-8,w,16);ctx.fillStyle='#fff';ctx.textAlign='left';ctx.textBaseline='middle';ctx.fillText(txt,pw+5,y)}
 function label(x,y,txt,color,align,base,font){ctx.font=font||'12px -apple-system,"Noto Sans KR",sans-serif';ctx.fillStyle=color;ctx.textAlign=align||'left';ctx.textBaseline=base||'bottom';ctx.fillText(txt,x,y);ctx.textAlign='left'}
 function draw(){
  const el=$('#chart'),W=el.clientWidth,H=el.clientHeight,dpr=devicePixelRatio||1;
@@ -311,7 +311,7 @@ function draw(){
  const pw=chart.timeScale().width(),ps=chart.panes(),ph=ps.length>1?ps[0].getHeight():H-chart.timeScale().height(),S=DATA.sym[cur],D=S.draw,c=pal(),Ly=ST.layers,i=hoverIdx==null?lastIdx:hoverIdx;
  let top=ph+1;for(let n=1;n<ps.length;n++){let x=8;for(const l of LEG.filter(q=>q.pane===n)){const t=l.name+'  ';label(x,top+16,t,c.mute,'left','alphabetic');x+=ctx.measureText(t).width;
    l.parts.forEach((v,j)=>{const s=(l.dec<0?fmtVol(v[i]||0):fmt(v[i],l.dec))+'  ';label(x,top+16,s,l.color[j]||l.color[0],'left','alphabetic');x+=ctx.measureText(s).width})}top+=ps[n].getHeight()+1}
- ctx.save();ctx.beginPath();ctx.rect(0,0,pw+90,ph);ctx.clip();
+ TQ=[];ctx.save();ctx.beginPath();ctx.rect(0,0,pw,ph);ctx.clip();
  if(Ly.box)for(const r of D.rects){const x1=X(r.t1),x2=r.t2?X(r.t2):X(dates[dates.length-1]),y1=Y(r.p1),y2=Y(r.p2);if([x1,x2,y1,y2].some(v=>v==null))continue;
    if(r.fill){ctx.fillStyle=r.fill;ctx.fillRect(x1,y1,x2-x1,y2-y1)}ctx.strokeStyle=r.color;ctx.lineWidth=1;dash(r.dash?2:0);ctx.strokeRect(x1,y1,x2-x1,y2-y1);label(x1+4,Math.min(y1,y2)+14,r.label,r.fill?'#26a69a':c.ink,'left','alphabetic')}
  if(Ly.paths)for(const p of D.paths){ctx.strokeStyle=p.color;ctx.lineWidth=1.6;dash(p.dash?2:0);ctx.beginPath();let ok=false,lx,ly;
@@ -322,7 +322,10 @@ function draw(){
  (mine[cur]||[]).forEach((o,n)=>drawMine(o,pw,ph,n===sel));
  if(pending&&hover){const a={x:X(pending.t),y:Y(pending.p)};if(a.x!=null&&a.y!=null){if(tool==='measure')drawMeasure(pending,ptFrom(hover),pw);else{ctx.strokeStyle=ST.color;ctx.lineWidth=1.5;dash(0);if(tool==='rect')ctx.strokeRect(a.x,a.y,hover.x-a.x,hover.y-a.y);else{ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(hover.x,hover.y);ctx.stroke()}}}}
  if(meas)drawMeasure(meas.a,meas.b,pw);
- ctx.restore()}
+ ctx.restore();const q=TQ;TQ=null;const lb=bars[lastIdx],cy=lb?Y(lb.close):null;q.sort((a,b)=>a[0]-b[0]);
+ const up=q.filter(t=>cy!=null&&t[0]<cy).reverse(),dn=q.filter(t=>!(cy!=null&&t[0]<cy));let lim=cy==null?99999:cy-17;
+ for(const t of up){const y=Math.min(t[0],lim);lim=y-16;if(y>-8)tag(y,t[1],t[2],t[3])}lim=cy==null?-99999:cy+17;
+ for(const t of dn){const y=Math.max(t[0],lim);lim=y+16;if(y<ph+8)tag(y,t[1],t[2],t[3])}}
 function drawMeasure(a,b,pw){if(b.p==null)return;const x1=X(a.t),y1=Y(a.p),x2=X(b.t),y2=Y(b.p);if([x1,y1,x2,y2].some(v=>v==null))return;const up=b.p>=a.p,col=up?'#2962ff':'#ef5350',S=DATA.sym[cur];
  ctx.fillStyle=col+'26';ctx.fillRect(x1,y1,x2-x1,y2-y1);ctx.strokeStyle=col;ctx.lineWidth=1;dash(0);ctx.strokeRect(x1,y1,x2-x1,y2-y1);
  const n=idxOf(b.t)-idxOf(a.t),days=Math.round((new Date(b.t)-new Date(a.t))/864e5),t1=`${fmt(b.p-a.p,S.dec)} (${((b.p/a.p-1)*100).toFixed(2)}%)`,t2=`${n}봉, ${days}일`;
