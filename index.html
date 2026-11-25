@@ -257,7 +257,7 @@ function rebuild(keep){
 function buildView(){const S=DATA.sym[cur];if(intra()){const A=(INTRA[cur+'|'+iv]||{bars:[]}).bars,st=TF[iv];bars=A.map(r=>({time:r[0],open:r[1],high:r[2],low:r[3],close:r[4],vol:r[5]}));const l=bars.length?bars[bars.length-1].time:0,fut=[];for(let i=1;i<=80;i++)fut.push(l+st*i);dates=bars.map(b=>b.time).concat(fut)}
  else{bars=aggregate(S.bars,iv);const fut=futureDates(bars[bars.length-1].time,S.future,iv,cur);dates=bars.map(b=>b.time).concat(fut)}lastIdx=bars.length-1}
 function load(k,keepRange){
- if(intra()&&!(INTRA[k+'|'+iv]&&INTRA[k+'|'+iv].bars.length)){cur=k;$('#bSym').textContent=k;$('#legend').textContent=IVN[iv]+' 불러오는 중…';const want=iv;
+ if(intra()&&!(INTRA[k+'|'+iv]&&INTRA[k+'|'+iv].bars.length)){if(IWS){IWS.onclose=null;try{IWS.close()}catch(e){}IWS=null}clearInterval(ITM);cur=k;$('#bSym').textContent=k;$('#legend').textContent=IVN[iv]+' 불러오는 중…';const want=iv;
   fetchIntra(k,want).then(a=>{if(!a.length)throw '데이터 없음';INTRA[k+'|'+want]={bars:a};if(cur===k&&iv===want)load(k,keepRange)}).catch(e=>{if(cur===k&&iv===want)$('#legend').textContent=IVN[want]+' 데이터를 불러오지 못했습니다 ('+e+')'});return}
  chart.applyOptions({timeScale:{timeVisible:intra(),secondsVisible:false}});
  cur=k;const S=DATA.sym[k];cmp=cmp.filter(x=>x!==k);sel=-1;meas=null;pending=null;
@@ -430,7 +430,7 @@ let liveT=null,liveLast=0;
 function schedLive(){if(liveT)return;const wait=Math.max(0,1500-(Date.now()-liveLast));liveT=setTimeout(applyLive,wait)}
 function applyLive(){liveT=null;if(pending){liveT=setTimeout(applyLive,800);return}liveLast=Date.now();const D=LIVE.dirty,ID=LIVE.idirty;LIVE.dirty=null;LIVE.idirty=false;if(!D&&!ID)return;
  try{if(D)renderWatch();$$('.wl li').forEach(li=>li.classList.toggle('sel',li.dataset.k===cur))}catch(e){}
- if(intra()?ID:D&&(D.has(cur)||cmp.some(k=>D.has(k)))){buildView();rebuild(true);if(hoverIdx==null)legend(null)}
+ if(intra()?ID&&INTRA[cur+'|'+iv]&&INTRA[cur+'|'+iv].bars.length:D&&(D.has(cur)||cmp.some(k=>D.has(k)))){buildView();rebuild(true);if(hoverIdx==null)legend(null)}
  liveStatus()}
 function liveStatus(){const t=new Date().toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit',second:'2-digit'});const a=[];
  a.push(LIVE.bn==='ws'?'코인 바이낸스 실시간':LIVE.bn==='rest'?'코인 바이낸스(갱신 중)':'코인 연결 중');
