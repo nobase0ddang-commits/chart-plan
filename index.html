@@ -27,7 +27,7 @@ header>*,footer>*{flex:none}
 .tb.on{color:var(--blue)}
 .tb.sym{font-weight:700;font-size:15px}
 header .grow{flex:1}
-header .upd{color:var(--mute);font-size:12px;padding:0 8px}
+header .upd{color:var(--mute);font-size:11px;padding:0 6px;max-width:300px;overflow:hidden;text-overflow:ellipsis;flex-shrink:1}
 nav.tools{background:var(--bg);display:flex;flex-direction:column;align-items:center;padding-top:4px;gap:1px;overflow-y:auto}
 nav.tools button{width:36px;height:34px;display:grid;place-items:center;flex:none}
 nav.tools button:hover{background:var(--hover)}
@@ -89,6 +89,7 @@ footer .sp{flex:1}
  header .upd,#bPanel{display:none}
  .legend{font-size:12px}.legend .t{font-size:13px}
 }
+.wl li{position:relative}.wl .rmw{position:absolute;right:2px;top:2px;border:0;background:transparent;color:var(--mute);font-size:13px;cursor:pointer;opacity:0;padding:0 4px}.wl li:hover .rmw{opacity:1}#symremote h4{margin:6px 10px 2px;font-size:11px;color:var(--mute);font-weight:500}
 </style>
 </head>
 <body>
@@ -96,7 +97,7 @@ footer .sp{flex:1}
  <header>
   <button class="tb sym" data-pop="pSym" id="bSym">NDX</button>
   <span class="sep"></span>
-  <button class="tb iv" data-iv="1m">1분</button><button class="tb iv" data-iv="5m">5분</button><button class="tb iv" data-iv="15m">15분</button><button class="tb iv" data-iv="1h">1시간</button><button class="tb iv" data-iv="4h">4시간</button><button class="tb iv on" data-iv="D">1D</button><button class="tb iv" data-iv="W">1W</button><button class="tb iv" data-iv="M">1M</button>
+  <button class="tb iv" data-iv="1m">1분</button><button class="tb iv" data-iv="3m">3분</button><button class="tb iv" data-iv="5m">5분</button><button class="tb iv" data-iv="15m">15분</button><button class="tb iv" data-iv="30m">30분</button><button class="tb iv" data-iv="45m">45분</button><button class="tb iv" data-iv="1h">1시간</button><button class="tb iv" data-iv="2h">2시간</button><button class="tb iv" data-iv="3h">3시간</button><button class="tb iv" data-iv="4h">4시간</button><button class="tb iv on" data-iv="D">1D</button><button class="tb iv" data-iv="W">1W</button><button class="tb iv" data-iv="M">1M</button>
   <span class="sep"></span>
   <button class="tb" data-pop="pType" id="bType">캔들</button>
   <button class="tb" data-pop="pInd" id="bInd">지표</button>
@@ -130,7 +131,7 @@ footer .sp{flex:1}
   <button class="tb sc" data-m="2">%</button><button class="tb sc" data-m="1">log</button><button class="tb" id="bAuto">auto</button><button class="tb" id="bReset" title="기본 보기로">초기화</button><button class="tb" id="bLock" title="확대·이동 잠금">잠금</button>
  </footer>
 </div>
-<div class="pop" id="pSym"><input type="text" id="symq" placeholder="종목 검색"><div id="symlist"></div></div>
+<div class="pop" id="pSym"><input type="text" id="symq" placeholder="종목 검색 (코인·국내·미국·지수)"><div id="symlist"></div><div id="symremote"></div></div>
 <div class="pop" id="pType"></div>
 <div class="pop" id="pInd"></div>
 <div class="pop" id="pCmp"></div>
@@ -157,7 +158,7 @@ const IDEF=[['sma5','이동평균 5','#e91e63'],['sma20','이동평균 20','#ff9
 const PANE=new Set(['rsi','macd','stoch','atr','obv']);
 const COLORS=['#2962ff','#ef5350','#26a69a','#f9a825','#ab47bc','#ff9800','#d1d4dc','#131722'];
 const TOOLS=[['cursor','십자선','<path d="M12 3v18M3 12h18"/>'],['trend','추세선','<path d="M4 19L20 5"/><circle cx="4" cy="19" r="1.8"/><circle cx="20" cy="5" r="1.8"/>'],
- ['ray','레이 (오른쪽 연장)','<path d="M4 18L21 7"/><circle cx="4" cy="18" r="1.8"/><circle cx="12" cy="12.8" r="1.8"/>'],['hline','수평선','<path d="M2 12h20"/><circle cx="12" cy="12" r="1.8"/>'],
+ ['ray','레이 (오른쪽 연장)','<path d="M4 18L21 7"/><circle cx="4" cy="18" r="1.8"/><circle cx="12" cy="12.8" r="1.8"/>'],['ext','연장선 (양쪽 끝까지)','<path d="M2 20L22 4"/><circle cx="8" cy="15.2" r="1.8"/><circle cx="16" cy="8.8" r="1.8"/>'],['arrow','화살표','<path d="M4 20L19 5M11 5h8v8"/>'],['hline','수평선','<path d="M2 12h20"/><circle cx="12" cy="12" r="1.8"/>'],
  ['hray','수평 레이','<path d="M6 12h15"/><circle cx="5" cy="12" r="1.8"/>'],['vline','수직선','<path d="M12 2v20"/><circle cx="12" cy="12" r="1.8"/>'],
  ['rect','사각형','<rect x="4" y="6" width="16" height="12"/>'],['fib','피보나치 되돌림','<path d="M3 5h18M3 10h18M3 14h18M3 19h18"/><path d="M5 19L19 5" stroke-dasharray="2 2"/>'],
  ['text','텍스트','<path d="M5 6h14M12 6v13M9 19h6"/>'],['measure','측정 (가격·기간)','<path d="M4 20L20 4M7 17l2 2M10 14l2 2M13 11l2 2M16 8l2 2"/>'],
@@ -189,7 +190,7 @@ function futureDates(last,end,mode,k){const out=[];let d=last;for(let g=0;g<800;
   else if(mode==='W')d=addDays(d,7);else{const x=new Date(d+'T00:00:00Z');x.setUTCMonth(x.getUTCMonth()+1);d=x.toISOString().slice(0,10)}
   if(d>end)break;out.push(d)}return out}
 function idxOf(t){let lo=0,hi=dates.length-1;if(t<=dates[0])return 0;if(t>=dates[hi])return hi;while(lo<hi){const m=(lo+hi+1)>>1;if(dates[m]<=t)lo=m;else hi=m-1}return lo}
-const TF={'1m':60,'5m':300,'15m':900,'1h':3600,'4h':14400},IVN={'1m':'1분','5m':'5분','15m':'15분','1h':'1시간','4h':'4시간',D:'1D',W:'1W',M:'1M'},intra=()=>!!TF[iv];
+const TF={'1m':60,'3m':180,'5m':300,'15m':900,'30m':1800,'45m':2700,'1h':3600,'2h':7200,'3h':10800,'4h':14400},IVN={'1m':'1분','3m':'3분','5m':'5분','15m':'15분','30m':'30분','45m':'45분','1h':'1시간','2h':'2시간','3h':'3시간','4h':'4시간',D:'1D',W:'1W',M:'1M'},intra=()=>!!TF[iv];
 const tnorm=t=>{if(intra())return typeof t==='string'?Date.parse(t.slice(0,10)+'T00:00:00Z')/1000:t;return typeof t==='number'?new Date(t*1000).toISOString().slice(0,10):t};
 const fmtT=t=>typeof t==='number'?new Date(t*1000).toISOString().slice(0,16).replace('T',' '):t;
 const X=t=>{t=tnorm(t);if(intra()&&t>dates[dates.length-1])return null;return chart.timeScale().logicalToCoordinate(idxOf(t))},Y=p=>main.priceToCoordinate(p);
@@ -257,6 +258,7 @@ function rebuild(keep){
 function buildView(){const S=DATA.sym[cur];if(intra()){const A=(INTRA[cur+'|'+iv]||{bars:[]}).bars,st=TF[iv];bars=A.map(r=>({time:r[0],open:r[1],high:r[2],low:r[3],close:r[4],vol:r[5]}));const l=bars.length?bars[bars.length-1].time:0,fut=[];for(let i=1;i<=80;i++)fut.push(l+st*i);dates=bars.map(b=>b.time).concat(fut)}
  else{bars=aggregate(S.bars,iv);const fut=futureDates(bars[bars.length-1].time,S.future,iv,cur);dates=bars.map(b=>b.time).concat(fut)}lastIdx=bars.length-1}
 function load(k,keepRange){
+ if(!intra()&&DATA.sym[k]&&DATA.sym[k].bars.length<2){cur=k;$('#bSym').textContent=k;$('#legend').textContent='일봉 불러오는 중…';ensureDaily(k).then(()=>{if(cur===k)load(k,keepRange)}).catch(e=>{if(cur===k)$('#legend').textContent='데이터를 불러오지 못했습니다 ('+e+')'});return}
  if(intra()&&!(INTRA[k+'|'+iv]&&INTRA[k+'|'+iv].bars.length)){if(IWS){IWS.onclose=null;try{IWS.close()}catch(e){}IWS=null}clearInterval(ITM);cur=k;$('#bSym').textContent=k;$('#legend').textContent=IVN[iv]+' 불러오는 중…';const want=iv;
   fetchIntra(k,want).then(a=>{if(!a.length)throw '데이터 없음';INTRA[k+'|'+want]={bars:a};if(cur===k&&iv===want)load(k,keepRange)}).catch(e=>{if(cur===k&&iv===want)$('#legend').textContent=IVN[want]+' 데이터를 불러오지 못했습니다 ('+e+')'});return}
  chart.applyOptions({timeScale:{timeVisible:intra(),secondsVisible:false}});
@@ -282,7 +284,7 @@ function ptFrom(pt){const lg=chart.timeScale().coordinateToLogical(pt.x),i=Math.
  if(ST.magnet&&i<=lastIdx&&p!=null){const b=bars[i];p=[b.open,b.high,b.low,b.close].reduce((a,v)=>Math.abs(v-p)<Math.abs(a-p)?v:a)}return{t:dates[i],p}}
 function addMine(o){o.c=ST.color;(mine[cur]=mine[cur]||[]).push(o);saveMine();dirty=true;if(tab==='mine')renderTab()}
 function delMine(i){if(i<0)return;(mine[cur]||[]).splice(i,1);sel=-1;saveMine();dirty=true;if(tab==='mine')renderTab()}
-const ONE={hline:'hl',hray:'h',vline:'v'},TWO={trend:'l',ray:'ray',rect:'r',fib:'fib'};
+const ONE={hline:'hl',hray:'h',vline:'v'},TWO={trend:'l',ray:'ray',rect:'r',fib:'fib',ext:'xl',arrow:'ar'};
 function onClick(pm){
  if(!pm.point||(pm.paneIndex!=null&&pm.paneIndex!==0))return;
  if(tool==='cursor'||tool==='eraser'){const i=hit(pm.point);if(tool==='eraser'){if(i>=0)delMine(i)}else{sel=i;dirty=true}return}
@@ -294,7 +296,7 @@ function onClick(pm){
  addMine({k:TWO[tool],a:pending,b:q});pending=null;setTool('cursor')}
 function hint(s){const h=$('#hint');h.textContent=s;h.style.display=s?'block':'none'}
 function setTool(t){tool=t;pending=null;if(t!=='measure')meas=null;$$('#tools [data-tool]').forEach(b=>b.classList.toggle('on',b.dataset.tool===t));
- hint({trend:'시작점을 클릭하세요',ray:'시작점을 클릭하세요',hline:'가격을 클릭하세요',hray:'가격을 클릭하세요',vline:'날짜를 클릭하세요',rect:'첫 모서리를 클릭하세요',fib:'시작점(1)을 클릭하세요',text:'위치를 클릭하세요',measure:'첫 점을 클릭하세요',eraser:'지울 그림을 클릭하세요'}[t]||'');dirty=true}
+ hint({ext:'첫 점을 클릭하세요',arrow:'시작점을 클릭하세요',trend:'시작점을 클릭하세요',ray:'시작점을 클릭하세요',hline:'가격을 클릭하세요',hray:'가격을 클릭하세요',vline:'날짜를 클릭하세요',rect:'첫 모서리를 클릭하세요',fib:'시작점(1)을 클릭하세요',text:'위치를 클릭하세요',measure:'첫 점을 클릭하세요',eraser:'지울 그림을 클릭하세요'}[t]||'');dirty=true}
 const FIB=[0,0.236,0.382,0.5,0.618,0.786,1,1.618];
 function G(o){const a=o.a?{x:X(o.a.t),y:Y(o.a.p)}:{x:X(o.t),y:Y(o.p)},b=o.b?{x:X(o.b.t),y:Y(o.b.p)}:null;return{a,b}}
 const dseg=(p,a,b)=>{const dx=b.x-a.x,dy=b.y-a.y,l=dx*dx+dy*dy||1;let t=((p.x-a.x)*dx+(p.y-a.y)*dy)/l;t=Math.max(0,Math.min(1,t));return Math.hypot(p.x-a.x-t*dx,p.y-a.y-t*dy)};
@@ -305,11 +307,13 @@ function hit(p){const L=mine[cur]||[],pw=chart.timeScale().width(),T=7;for(let i
   if(!b||b.x==null||b.y==null)continue;
   if(o.k==='l'&&dseg(p,a,b)<T)return i;
   if(o.k==='ray'&&dseg(p,a,rayEnd(a,b,pw))<T)return i;
+  if(o.k==='xl'&&dseg(p,rayEnd(b,a,pw),rayEnd(a,b,pw))<T)return i;
+  if(o.k==='ar'&&dseg(p,a,b)<T)return i;
   if(o.k==='r'){const x1=Math.min(a.x,b.x),x2=Math.max(a.x,b.x),y1=Math.min(a.y,b.y),y2=Math.max(a.y,b.y);if(p.x>=x1-T&&p.x<=x2+T&&p.y>=y1-T&&p.y<=y2+T)return i}
   if(o.k==='fib'&&p.x>=Math.min(a.x,b.x)-T)for(const f of FIB){const y=Y(o.b.p+(o.a.p-o.b.p)*f);if(y!=null&&Math.abs(p.y-y)<T)return i}}
  return -1}
 const ov=$('#ov'),ctx=ov.getContext('2d');
-const dash=st=>ctx.setLineDash(st===2?[6,5]:st===1?[2,3]:[]);
+const dash=st=>ctx.setLineDash(st===2?[6,5]:st===1?[2,3]:st===3?[10,6]:[]);
 let TQ=null;function tag(y,price,color,pw){if(TQ){TQ.push([y,price,color,pw]);return}const txt=fmt(price,DATA.sym[cur].dec);ctx.font='11px sans-serif';const w=ctx.measureText(txt).width+8;ctx.fillStyle=color;ctx.fillRect(pw+1,y-8,w,16);ctx.fillStyle='#fff';ctx.textAlign='left';ctx.textBaseline='middle';ctx.fillText(txt,pw+5,y)}
 function label(x,y,txt,color,align,base,font){ctx.font=font||'12px -apple-system,"Noto Sans KR",sans-serif';ctx.fillStyle=color;ctx.textAlign=align||'left';ctx.textBaseline=base||'bottom';ctx.fillText(txt,x,y);ctx.textAlign='left'}
 function draw(){
@@ -327,6 +331,7 @@ function draw(){
  if(Ly.levels){const hs=[];for(const h of D.hlines){const x=Math.max(0,X(h.t)),y=Y(h.p);if(y==null||y<0||y>ph)continue;ctx.strokeStyle=h.color;ctx.lineWidth=h.style===0?1.5:1;dash(h.style);ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(pw,y);ctx.stroke();hs.push({h,y})}
   hs.sort((a,b)=>a.y-b.y);let ly=-99,ty=-99;for(const o of hs){const yl=Math.max(o.y-3,ly+14);ly=yl;label(pw-6,yl,o.h.label,o.h.color,'right');const yt=Math.max(o.y,ty+16);ty=yt;tag(yt,o.h.p,o.h.color,pw)}}
  if(Ly.count&&!intra())for(const l of D.labels){const x=X(l.t),y=Y(l.p);if(x==null||y==null)continue;label(x,l.pos==='a'?y-6:y+6,l.text,c.wave,'center',l.pos==='a'?'bottom':'top','bold 15px -apple-system,"Noto Sans KR",sans-serif')}
+ try{drawTV(pw,ph)}catch(e){console.error(e)}
  (mine[cur]||[]).forEach((o,n)=>drawMine(o,pw,ph,n===sel));
  if(pending&&hover){const a={x:X(pending.t),y:Y(pending.p)};if(a.x!=null&&a.y!=null){if(tool==='measure')drawMeasure(pending,ptFrom(hover),pw);else{ctx.strokeStyle=ST.color;ctx.lineWidth=1.5;dash(0);if(tool==='rect')ctx.strokeRect(a.x,a.y,hover.x-a.x,hover.y-a.y);else{ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(hover.x,hover.y);ctx.stroke()}}}}
  if(meas)drawMeasure(meas.a,meas.b,pw);
@@ -342,19 +347,21 @@ function drawMeasure(a,b,pw){if(b.p==null)return;const x1=X(a.t),y1=Y(a.p),x2=X(
 function drawMine(o,pw,ph,isSel){const col=o.c||'#2962ff',{a,b}=G(o);if(a.x==null||a.y==null)return;ctx.strokeStyle=col;ctx.lineWidth=isSel?2.5:1.5;dash(0);const pts=[a];
  if(o.k==='hl'){ctx.beginPath();ctx.moveTo(0,a.y);ctx.lineTo(pw,a.y);ctx.stroke();tag(a.y,o.p,col,pw)}
  if(o.k==='h'){ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(pw,a.y);ctx.stroke();tag(a.y,o.p,col,pw)}
- if(o.k==='v'){ctx.beginPath();ctx.moveTo(a.x,0);ctx.lineTo(a.x,ph);ctx.stroke();label(a.x+4,ph-6,o.t,col)}
+ if(o.k==='v'){ctx.beginPath();ctx.moveTo(a.x,0);ctx.lineTo(a.x,ph);ctx.stroke();label(a.x+4,ph-6,fmtT(o.t),col)}
  if(o.k==='x')label(a.x,a.y,o.s,col,'left','middle','13px -apple-system,"Noto Sans KR",sans-serif');
  if(b&&b.x!=null&&b.y!=null){pts.push(b);
   if(o.k==='l'){ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);ctx.stroke()}
   if(o.k==='ray'){const e=rayEnd(a,b,pw);ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(e.x,e.y);ctx.stroke()}
+  if(o.k==='xl'){const s=rayEnd(b,a,pw),e=rayEnd(a,b,pw);ctx.beginPath();ctx.moveTo(s.x,s.y);ctx.lineTo(e.x,e.y);ctx.stroke()}
+  if(o.k==='ar'){const ang=Math.atan2(b.y-a.y,b.x-a.x);ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);ctx.moveTo(b.x-12*Math.cos(ang-0.45),b.y-12*Math.sin(ang-0.45));ctx.lineTo(b.x,b.y);ctx.lineTo(b.x-12*Math.cos(ang+0.45),b.y-12*Math.sin(ang+0.45));ctx.stroke()}
   if(o.k==='r'){ctx.fillStyle=col+'1f';ctx.fillRect(a.x,a.y,b.x-a.x,b.y-a.y);ctx.strokeRect(a.x,a.y,b.x-a.x,b.y-a.y)}
   if(o.k==='fib'){const x0=Math.min(a.x,b.x);ctx.lineWidth=1;for(const f of FIB){const p=o.b.p+(o.a.p-o.b.p)*f,y=Y(p);if(y==null)continue;ctx.globalAlpha=f===0||f===1?1:0.75;ctx.beginPath();ctx.moveTo(x0,y);ctx.lineTo(pw,y);ctx.stroke();label(x0+4,y-3,`${f} (${fmt(p,DATA.sym[cur].dec)})`,col)}ctx.globalAlpha=1;dash(1);ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);ctx.stroke();dash(0)}}
  if(isSel)for(const p of pts){ctx.fillStyle=TH().bg;ctx.strokeStyle=col;ctx.lineWidth=2;ctx.beginPath();ctx.arc(p.x,p.y,4.5,0,7);ctx.fill();ctx.stroke()}}
 function loop(){try{if(chart&&DATA&&main&&bars[lastIdx]){const r=chart.timeScale().getVisibleLogicalRange(),ps=chart.panes(),s=[r&&r.from,r&&r.to,Y(bars[lastIdx].close),$('#chart').clientWidth,$('#chart').clientHeight,ps.map(p=>p.getHeight()).join(',')].join('|');
   if(s!==sig||dirty){sig=s;dirty=false;try{draw()}catch(e){console.error(e)}}}}catch(e){console.error(e)}requestAnimationFrame(loop)}
-function renderWatch(){$('#wl').innerHTML=DATA.order.map(k=>{const S=DATA.sym[k],b=S.bars,l=b[b.length-1],p=b[b.length-2],pc=(l[4]/p[4]-1)*100;
+function renderWatch(){$('#wl').innerHTML=DATA.order.map(k=>{const S=DATA.sym[k],b=S.bars;if(b.length<2)return `<li data-k="${esc(k)}"><span><span class="n">${esc(k)}</span><span class="x">${esc(S.name)}</span></span><span class="v">…</span><span class="c"></span></li>`;const l=b[b.length-1],p=b[b.length-2],pc=(l[4]/p[4]-1)*100;
   return `<li data-k="${esc(k)}"><span><span class="n">${esc(k)}</span><span class="x">${esc(S.name)}</span></span><span class="v">${fmt(l[4],S.dec)}</span><span class="c ${pc>=0?'up':'dn'}">${pc>=0?'+':''}${pc.toFixed(2)}%</span></li>`}).join('');
- $$('.wl li').forEach(li=>li.addEventListener('click',()=>go(li.dataset.k)))}
+ $$('.wl li').forEach(li=>{li.addEventListener('click',()=>go(li.dataset.k));if(ADDED.some(d=>d.k===li.dataset.k)){const x=document.createElement('button');x.className='rmw';x.textContent='×';x.title='관심종목에서 빼기';x.addEventListener('click',e=>{e.stopPropagation();removeSym(li.dataset.k)});li.appendChild(x)}})}
 const go=k=>{if(k===cur)return;location.hash=k.toLowerCase();if(cur!==k)load(k)};
 const KN={l:'추세선',ray:'레이',hl:'수평선',h:'수평 레이',v:'수직선',r:'사각형',fib:'피보나치',x:'텍스트'};
 function renderTab(){const S=DATA.sym[cur],d=S.dec,el=$('#detail'),last=S.bars[S.bars.length-1];
@@ -375,7 +382,7 @@ function buildPops(){
  $('#pType').innerHTML=Object.entries(TYPES).map(([k,n])=>`<button class="it ${ST.type===k?'on':''}" data-type="${k}">${n}</button>`).join('');$('#bType').textContent=TYPES[ST.type]||'캔들';
  $('#pInd').innerHTML='<h4>차트 위에 겹치는 지표</h4>'+IDEF.filter(x=>!PANE.has(x[0])).map(ck).join('')+'<h4>아래 패널 지표</h4>'+IDEF.filter(x=>PANE.has(x[0])).map(ck).join('')+'<button class="it" data-indoff="1" style="color:var(--mute)">지표 모두 끄기</button>';
  $('#pCmp').innerHTML='<h4>다른 종목을 % 수익률 선으로 겹쳐 보기</h4>'+DATA.order.filter(k=>k!==cur).map(k=>`<label><input type="checkbox" data-cmp="${esc(k)}" ${cmp.includes(k)?'checked':''}>${esc(k)} <span style="color:var(--mute)">${esc(DATA.sym[k].name)}</span></label>`).join('');
- $('#pClaude').innerHTML=[['count','엘리엇 카운트 라벨'],['box','20봉 박스·매수 구간'],['levels','손절·목표·확인선'],['paths','시나리오·200일선 예상 경로']].map(([k,n])=>`<label><input type="checkbox" data-layer="${k}" ${ST.layers[k]?'checked':''}>${n}</label>`).join('')+'<button class="it" data-layerall="1" style="color:var(--mute)">전부 켜기 / 끄기</button>';
+ $('#pClaude').innerHTML=[['count','엘리엇 카운트 라벨'],['box','20봉 박스·매수 구간'],['levels','손절·목표·확인선'],['paths','시나리오·200일선 예상 경로'],['tv','트뷰에서 옮긴 작도'],['tvhid','트뷰에서 숨겨둔 작도까지 보기']].map(([k,n])=>`<label><input type="checkbox" data-layer="${k}" ${ST.layers[k]??(k==='tv')?'checked':''}>${n}</label>`).join('')+'<button class="it" data-layerall="1" style="color:var(--mute)">전부 켜기 / 끄기</button>';
  $('#pSet').innerHTML='<h4>테마</h4>'+[['auto','자동 (기기 설정)']].concat(Object.entries(THEMES).map(([k,v])=>[k,v.n])).map(([k,n])=>`<button class="it ${ST.ui===k?'on':''}" data-ui="${k}">${k==='auto'?'':`<span class="dot" style="background:${THEMES[k].bg};border:1px solid ${THEMES[k].mute}"></span>`}${n}</button>`).join('')+
   '<h4>캔들 색</h4>'+Object.entries(SCHEMES).map(([k,v])=>`<button class="it ${ST.candle===k?'on':''}" data-candle="${k}"><span class="dot" style="background:${v.up}"></span><span class="dot" style="background:${v.dn}"></span>${v.n}</button>`).join('')+
   `<h4>마우스 휠</h4><button class="it ${ST.wheel!=='scroll'?'on':''}" data-wheel="zoom">휠 = 확대·축소 (트레이딩뷰 기본)</button><button class="it ${ST.wheel==='scroll'?'on':''}" data-wheel="scroll">휠 = 좌우 이동 (확대는 Ctrl+휠·핀치)</button><h4>주식 실시간 프록시 (선택)</h4><div style="padding:4px 10px 8px;font-size:12px;color:var(--mute)">비워두면 5분마다 갱신되는 시세 파일을 씁니다. 클라우드플레어 워커 주소를 넣으면 1초 간격.</div><input data-proxy="1" placeholder="https://xxx.workers.dev" value="${esc(proxyURL())}" style="margin:0 10px 8px;width:calc(100% - 20px);padding:6px;background:var(--bg);color:var(--ink);border:1px solid var(--line);border-radius:4px"><h4>기타</h4><label><input type="checkbox" data-grid="1" ${ST.grid?'checked':''}>격자선 표시</label><button class="it" data-reset="1" style="color:var(--mute)">설정 초기화</button>`;
@@ -385,12 +392,12 @@ function openPop(id,btn){const p=$('#'+id),was=p.classList.contains('open');clos
  p.style.left=Math.max(4,Math.min(side?r.right+6:r.left,innerWidth-p.offsetWidth-6))+'px';p.style.top=Math.max(4,Math.min(side?r.top:r.bottom+4,innerHeight-p.offsetHeight-6))+'px';if(id==='pSym'){$('#symq').value='';buildPops();$('#symq').focus()}}
 document.addEventListener('click',e=>{const b=e.target.closest('[data-pop]');if(b){openPop(b.dataset.pop,b);return}
  const t=e.target.closest('.pop button');if(!t){if(!e.target.closest('.pop'))closePops();return}const d=t.dataset;let close=true;
- if(d.go)go(d.go);else if(d.type){ST.type=d.type;rebuild(true)}else if(d.ui){ST.ui=d.ui;applyTheme()}else if(d.candle){ST.candle=d.candle;applyTheme()}else if(d.wheel){ST.wheel=d.wheel;applyInteract()}
+ if(d.add){try{addSym(JSON.parse(d.add),true)}catch(e){}$('#symq').value='';searchRemote('')}else if(d.go)go(d.go);else if(d.type){ST.type=d.type;rebuild(true)}else if(d.ui){ST.ui=d.ui;applyTheme()}else if(d.candle){ST.candle=d.candle;applyTheme()}else if(d.wheel){ST.wheel=d.wheel;applyInteract()}
  else if(d.indoff){ST.ind={};rebuild(true)}else if(d.layerall){const on=!Object.values(ST.layers).every(Boolean);for(const k in ST.layers)ST.layers[k]=on;dirty=true;close=false}
  else if(d.reset){try{localStorage.removeItem('bh-tv-set')}catch(e){}ST=DEF();applyTheme();syncUI()}
  else if(d.color){ST.color=d.color;if(sel>=0&&(mine[cur]||[])[sel]){mine[cur][sel].c=d.color;saveMine()}dirty=true}else return;
  saveST();buildPops();if(close)closePops()});
-$('#symq').addEventListener('input',buildPops);$('#symq').addEventListener('keydown',e=>{if(e.key==='Enter'){const f=$('#symlist [data-go]');if(f)f.click()}});
+$('#symq').addEventListener('input',()=>{buildPops();searchRemote(($('#symq').value||'').trim())});$('#symq').addEventListener('keydown',e=>{if(e.key==='Enter'){const f=$('#symlist [data-go]');if(f)f.click()}});
 document.addEventListener('change',e=>{const d=e.target.dataset;if(!e.target.closest('.pop'))return;
  if(d.ind){if(e.target.checked)ST.ind[d.ind]=true;else delete ST.ind[d.ind];rebuild(true)}else if(d.cmp){if(e.target.checked)cmp.push(d.cmp);else cmp=cmp.filter(x=>x!==d.cmp);rebuild(true)}
  else if(d.proxy){try{localStorage.setItem('bh-tv-proxy',e.target.value.trim())}catch(err){}pollStocks()}else if(d.layer){ST.layers[d.layer]=e.target.checked;dirty=true}else if(d.grid){ST.grid=e.target.checked;applyTheme()}saveST()});
@@ -439,10 +446,10 @@ async function bnHistory(k){const s=BN[k];const urls=[`https://fapi.binance.com/
  for(const u of urls){try{const r=await fetch(u);if(!r.ok)continue;const j=await r.json();if(!Array.isArray(j)||!j.length)continue;
   mergeBars(k,j.map(x=>[ymdUTC(x[0]),+x[1],+x[2],+x[3],+x[4],+x[5]]));DATA.sym[k].ex=u.includes('fapi')?'BINANCE 선물':'BINANCE 현물';LIVE.bn=LIVE.bn||'rest';return u.includes('fapi')?'f':'s'}catch(e){}}return null}
 function bnSocket(kind,tries){const ks=Object.keys(BN).filter(k=>DATA.sym[k]);if(!ks.length)return;const st=ks.map(k=>BN[k].toLowerCase()+'@kline_1d').join('/');
- const url=(kind==='s'?'wss://data-stream.binance.vision/stream?streams=':'wss://fstream.binance.com/stream?streams=')+st;let ws;try{ws=new WebSocket(url)}catch(e){return}
+ const url=(kind==='s'?'wss://data-stream.binance.vision/stream?streams=':'wss://fstream.binance.com/stream?streams=')+st;let ws;try{ws=new WebSocket(url);LIVE.ws=ws}catch(e){return}
  let ok=false;ws.onopen=()=>{ok=true;LIVE.bn='ws';liveStatus()};
  ws.onmessage=e=>{try{const m=JSON.parse(e.data),x=m.data&&m.data.k;if(!x)return;const k=ks.find(q=>BN[q]===x.s);if(k)mergeBars(k,[[ymdUTC(x.t),+x.o,+x.h,+x.l,+x.c,+x.v]])}catch(err){}};
- ws.onclose=()=>{LIVE.bn='rest';liveStatus();const n=(tries||0)+1,next=!ok&&kind!=='s'&&n>=2?'s':kind;setTimeout(()=>bnSocket(next,ok?0:n),Math.min(30000,2000*n))}}
+ ws.onclose=()=>{if(ws!==LIVE.ws)return;LIVE.bn='rest';liveStatus();const n=(tries||0)+1,next=!ok&&kind!=='s'&&n>=2?'s':kind;setTimeout(()=>bnSocket(next,ok?0:n),Math.min(30000,2000*n))}}
 function proxyURL(){const q=new URLSearchParams(location.search).get('proxy');if(q){try{localStorage.setItem('bh-tv-proxy',q)}catch(e){}}
  let p='';try{p=localStorage.getItem('bh-tv-proxy')||''}catch(e){}return p||DEFAULT_PROXY}
 const DEFAULT_PROXY='https://bh-quotes.nobase0ddang.workers.dev';
@@ -456,28 +463,79 @@ document.addEventListener('visibilitychange',()=>{if(!document.hidden&&proxyURL(
 const INTRA={},USY={NDX:'^NDX',SNDK:'SNDK'},KRN={KOSPI:['index','KOSPI','^KS11'],SEC:['item','005930','005930.KS'],SKH:['item','000660','000660.KS']};
 const PX=u=>proxyURL().replace(/\/$/,'')+'/?u='+encodeURIComponent(u);
 function aggTF(rows,sec){const m=new Map();for(const r of rows){const k=Math.floor(r[0]/sec)*sec,b=m.get(k);if(!b)m.set(k,[k,r[1],r[2],r[3],r[4],r[5]]);else{b[2]=Math.max(b[2],r[2]);b[3]=Math.min(b[3],r[3]);b[4]=r[4];b[5]+=r[5]}}return [...m.values()].sort((a,b)=>a[0]-b[0])}
-async function yahooTF(sym,tf){const itv={'1m':'1m','5m':'5m','15m':'15m','1h':'60m','4h':'60m'}[tf],rg={'1m':'5d','5m':'1mo','15m':'1mo','1h':'1y','4h':'2y'}[tf];
+const YB={'1m':['1m','5d'],'3m':['1m','5d'],'5m':['5m','1mo'],'15m':['15m','1mo'],'30m':['30m','1mo'],'45m':['15m','1mo'],'1h':['60m','1y'],'2h':['60m','2y'],'3h':['60m','2y'],'4h':['60m','2y']};
+async function yahooTF(sym,tf){const [itv,rg]=YB[tf];
  const j=await (await fetch(PX(`https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(sym)}?interval=${itv}&range=${rg}`))).json(),r=j.chart.result[0],t=r.timestamp||[],q=r.indicators.quote[0],o=[];
- for(let i=0;i<t.length;i++){if(q.close[i]==null||q.open[i]==null)continue;o.push([t[i]+32400,q.open[i],q.high[i],q.low[i],q.close[i],q.volume[i]||0])}return aggTF(o,tf==='4h'?14400:TF[tf])}
+ for(let i=0;i<t.length;i++){if(q.close[i]==null||q.open[i]==null)continue;o.push([t[i]+32400,q.open[i],q.high[i],q.low[i],q.close[i],q.volume[i]||0])}return aggTF(o,TF[tf])}
 const kst=ms=>new Date(ms+324e5).toISOString().replace(/[-:T]/g,'').slice(0,12);
 async function naverTF(k,period,days){const [kind,code]=KRN[k],now=Date.now(),u=`https://api.stock.naver.com/chart/domestic/${kind}/${code}/${period}?startDateTime=${kst(now-days*864e5).slice(0,8)}0000&endDateTime=${kst(now).slice(0,8)}2359`;
  const a=await (await fetch(PX(u))).json();return a.map(x=>{const s=x.localDateTime;return [Date.UTC(+s.slice(0,4),+s.slice(4,6)-1,+s.slice(6,8),+s.slice(8,10),+s.slice(10,12))/1000,x.openPrice,x.highPrice,x.lowPrice,x.currentPrice,(x.accumulatedTradingVolume||0)/(k==='KOSPI'?1000:1)]})}
 async function fetchIntra(k,tf){
- if(BN[k]){for(const u of [`https://fapi.binance.com/fapi/v1/klines?symbol=${BN[k]}&interval=${tf}&limit=1500`,`https://data-api.binance.vision/api/v3/klines?symbol=${BN[k]}&interval=${tf}&limit=1000`]){try{const r=await fetch(u);if(!r.ok)continue;return (await r.json()).map(x=>[x[0]/1000+32400,+x[1],+x[2],+x[3],+x[4],+x[5]])}catch(e){}}throw '바이낸스 연결 실패'}
+ if(BN[k]){const bi={'45m':'15m','3h':'1h'}[tf]||tf;for(const u of [`https://fapi.binance.com/fapi/v1/klines?symbol=${BN[k]}&interval=${bi}&limit=1500`,`https://data-api.binance.vision/api/v3/klines?symbol=${BN[k]}&interval=${bi}&limit=1000`]){try{const r=await fetch(u);if(!r.ok)continue;const a=(await r.json()).map(x=>[x[0]/1000+32400,+x[1],+x[2],+x[3],+x[4],+x[5]]);return bi===tf?a:aggTF(a,TF[tf])}catch(e){}}throw '바이낸스 연결 실패'}
  if(USY[k])return yahooTF(USY[k],tf);
- if(KRN[k]){if(TF[tf]<=900)return naverTF(k,{'1m':'minute','5m':'minute5','15m':'minute15'}[tf],14);
+ if(KRN[k]){if(TF[tf]<3600){const [pd,sec]={'1m':['minute',60],'3m':['minute',60],'5m':['minute5',300],'15m':['minute15',900],'30m':['minute30',1800],'45m':['minute15',900]}[tf];const a=await naverTF(k,pd,14);return sec===TF[tf]?a:aggTF(a,TF[tf])}
   let y=[];try{y=await yahooTF(KRN[k][2],'1h')}catch(e){}let nv=[];try{nv=await naverTF(k,'minute60',14)}catch(e){}
-  const m=new Map(y.map(r=>[r[0],r]));for(const r of nv)m.set(r[0],r);const rows=[...m.values()].sort((a,b)=>a[0]-b[0]);return tf==='4h'?aggTF(rows,14400):rows}
+  const m=new Map(y.map(r=>[r[0],r]));for(const r of nv)m.set(r[0],r);const rows=[...m.values()].sort((a,b)=>a[0]-b[0]);return tf==='1h'?rows:aggTF(rows,TF[tf])}
  throw '지원하지 않는 종목'}
 function mergeIntra(key,rows){const c=INTRA[key];if(!c)return;const A=c.bars;for(const r of rows){const L=A[A.length-1];if(L&&L[0]===r[0])A[A.length-1]=r;else if(!L||r[0]>L[0])A.push(r)}if(key===cur+'|'+iv){LIVE.idirty=true;schedLive()}}
 let IWS=null,ITM=null;
 function startIntraLive(){if(IWS){IWS.onclose=null;try{IWS.close()}catch(e){}IWS=null}clearInterval(ITM);if(!intra())return;const k=cur,tf=iv,key=k+'|'+tf;
- if(BN[k]){try{IWS=new WebSocket(`wss://fstream.binance.com/ws/${BN[k].toLowerCase()}@kline_${tf}`);IWS.onmessage=e=>{try{const x=JSON.parse(e.data).k;if(x)mergeIntra(key,[[x.t/1000+32400,+x.o,+x.h,+x.l,+x.c,+x.v]])}catch(err){}};
+ if(BN[k]&&!['45m','3h'].includes(tf)){try{IWS=new WebSocket(`wss://fstream.binance.com/ws/${BN[k].toLowerCase()}@kline_${tf}`);IWS.onmessage=e=>{try{const x=JSON.parse(e.data).k;if(x)mergeIntra(key,[[x.t/1000+32400,+x.o,+x.h,+x.l,+x.c,+x.v]])}catch(err){}};
   IWS.onclose=()=>{if(cur===k&&iv===tf)setTimeout(startIntraLive,3000)}}catch(e){}}
  else ITM=setInterval(()=>{if(document.hidden)return;fetchIntra(k,tf).then(a=>{if(a.length&&INTRA[key]){INTRA[key].bars=a;if(cur===k&&iv===tf){LIVE.idirty=true;schedLive()}}}).catch(()=>{})},3000)}
 
+/* ===== 종목 검색·추가 ===== */
+const NVP={NDX:'worldstock/index/.NDX',SNDK:'worldstock/stock/SNDK.O',KOSPI:'domestic/index/KOSPI',SEC:'domestic/stock/005930',SKH:'domestic/stock/000660'},ADDED=[];
+const YIDX={'.IXIC':'^IXIC','.NDX':'^NDX','.DJI':'^DJI','.INX':'^GSPC','.SOX':'^SOX',KOSPI:'^KS11',KOSDAQ:'^KQ11',KPI200:'^KS200'};
+function saveAdded(){try{localStorage.setItem('bh-tv-wl2',JSON.stringify(ADDED))}catch(e){}}
+function decOf(p){return p>=1000?0:p>=10?2:p>=1?3:p>=0.01?5:7}
+function regSym(d){if(!DATA.sym[d.k])DATA.sym[d.k]={name:d.name,ex:d.ex,tv:d.tv||'',dec:d.dec??2,future:'2027-12-31',bars:[],draw:{rects:[],hlines:[],paths:[],labels:[]},plan:[],added:1};
+ if(!DATA.order.includes(d.k))DATA.order.push(d.k);if(d.t==='bn')BN[d.k]=d.s;else if(d.t==='kr')KRN[d.k]=[d.kind,d.code,d.y];else if(d.y)USY[d.k]=d.y;if(d.nv)NVP[d.k]=d.nv}
+const DLOAD={};
+function ensureDaily(k){if(DLOAD[k])return DLOAD[k];const S=DATA.sym[k];if(S.bars.length>=2&&!S.added)return Promise.resolve();
+ DLOAD[k]=(async()=>{if(BN[k]){const r=await bnHistory(k);if(!r)throw '바이낸스 연결 실패';restartBn()}else{const y=USY[k]||(KRN[k]&&KRN[k][2]);if(!y)throw '시세 출처 없음';
+  const j=await (await fetch(PX(`https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(y)}?interval=1d&range=10y`))).json(),r=j.chart.result[0],off=r.meta.gmtoffset||0,t=r.timestamp||[],q=r.indicators.quote[0],rows=[];
+  for(let i=0;i<t.length;i++){if(q.close[i]==null||q.open[i]==null)continue;rows.push([new Date((t[i]+off)*1000).toISOString().slice(0,10),q.open[i],q.high[i],q.low[i],q.close[i],q.volume[i]||0])}mergeBars(k,rows)}
+  const B=S.bars;if(B.length&&S.added)S.dec=BN[k]?Math.max(decOf(B[B.length-1][4]),S.dec||0):decOf(B[B.length-1][4])})();DLOAD[k].catch(()=>{delete DLOAD[k]});return DLOAD[k]}
+function restartBn(){if(LIVE.ws){const w=LIVE.ws;LIVE.ws=null;try{w.close()}catch(e){}}bnSocket('f',0)}
+async function nvQuote(k){const p=NVP[k];if(!p)return;const d=(await (await fetch(PX('https://polling.finance.naver.com/api/realtime/'+p))).json()).datas[0],n=x=>{const v=parseFloat(String(x==null?'':x).replace(/,/g,''));return isFinite(v)?v:null};
+ const day=(d.localTradedAt||'').slice(0,10),o=n(d.openPriceRaw||d.openPrice),h=n(d.highPriceRaw||d.highPrice),l=n(d.lowPriceRaw||d.lowPrice),c=n(d.closePriceRaw||d.closePrice),v=n(d.accumulatedTradingVolumeRaw)||0;
+ if(day&&o&&c)mergeBars(k,[[day,o,h||c,l||c,c,p.includes('index')&&KRN[k]?v/1000:v]])}
+let extraTick=0;
+function pollExtra(){extraTick++;if(!document.hidden){for(const k of DATA.order){const S=DATA.sym[k];if(!S.added||BN[k]||!NVP[k]||S.bars.length<2)continue;if(k===cur||extraTick%15===0)nvQuote(k).catch(()=>{})}}setTimeout(pollExtra,1000)}
+function addSym(d,go_){regSym(d);if(!ADDED.some(x=>x.k===d.k)&&!d.builtin){ADDED.push(d);saveAdded()}renderWatch();ensureDaily(d.k).then(()=>{renderWatch();if(cur===d.k&&!intra())load(d.k)}).catch(()=>{});if(go_)go(d.k)}
+function removeSym(k){const i=ADDED.findIndex(x=>x.k===k);if(i<0)return;ADDED.splice(i,1);saveAdded();DATA.order=DATA.order.filter(x=>x!==k);if(cur===k)go(DATA.order[0]);renderWatch()}
+let BNLIST=null;
+async function bnList(){if(BNLIST)return BNLIST;try{const j=await (await fetch('https://fapi.binance.com/fapi/v1/exchangeInfo')).json();BNLIST=j.symbols.filter(s=>s.contractType==='PERPETUAL'&&s.quoteAsset==='USDT'&&s.status==='TRADING').map(s=>({s:s.symbol,b:s.baseAsset,tick:s.filters&&(s.filters.find(f=>f.filterType==='PRICE_FILTER')||{}).tickSize}))}catch(e){BNLIST=[]}return BNLIST}
+let srchT=null,srchQ='';
+function searchRemote(q){clearTimeout(srchT);srchQ=q;const el=$('#symremote');if(!el)return;if(!q){el.innerHTML='';return}el.innerHTML='<div class="it" style="color:var(--mute)">검색 중…</div>';
+ srchT=setTimeout(async()=>{const out=[],Q=q.toUpperCase();
+  const bl=await bnList();for(const s of bl.filter(s=>s.b.startsWith(Q)||s.s.startsWith(Q)).slice(0,8)){const dec=s.tick?Math.max(0,(s.tick.replace(/0+$/,'').split('.')[1]||'').length):2;out.push({k:DATA.sym[s.b]&&!BN[s.b]?s.b+'.P':s.b,name:s.b+' 무기한',ex:'BINANCE 선물',tv:'BINANCE:'+s.s+'.P',t:'bn',s:s.s,dec})}
+  try{const j=await (await fetch(PX('https://ac.stock.naver.com/ac?q='+encodeURIComponent(q)+'&target=stock,index'))).json();
+   for(const i of j.items||[]){if(i.nationCode==='KOR'&&i.category==='stock'){const y=i.code+(i.typeCode==='KOSDAQ'?'.KQ':'.KS');out.push({k:i.code,name:i.name,ex:i.typeName||'KRX',tv:'KRX:'+i.code,t:'kr',kind:'item',code:i.code,y,nv:'domestic/stock/'+i.code,dec:0})}
+    else if(i.nationCode==='USA'&&i.category==='stock'){out.push({k:i.code,name:i.name,ex:i.typeCode,tv:(i.typeCode||'')+':'+i.code,t:'us',y:i.code.replace('.','-'),nv:'worldstock/stock/'+i.reutersCode})}
+    else if(i.category==='index'&&YIDX[i.reutersCode||i.code]){const rc=i.reutersCode||i.code,kr=rc==='KOSPI'||rc==='KOSDAQ'||rc==='KPI200';out.push(kr?{k:rc,name:i.name,ex:'KRX',t:'kr',kind:'index',code:rc,y:YIDX[rc],nv:'domestic/index/'+rc}:{k:rc.replace('.',''),name:i.name,ex:'INDEX',t:'us',y:YIDX[rc],nv:'worldstock/index/'+rc})}}}catch(e){}
+  if(q!==srchQ)return;const seen=new Set(DATA.order);el.innerHTML=out.length?'<h4>추가할 수 있는 종목</h4>'+out.filter(d=>!seen.has(d.k)).map(d=>`<button class="it" data-add="${esc(JSON.stringify(d))}"><b style="width:72px">${esc(d.k)}</b><span style="color:var(--mute)">${esc(d.name)} · ${esc(d.ex)}</span></button>`).join(''):'<div class="it" style="color:var(--mute)">검색 결과 없음</div>'},300)}
+function initAdded(){const base=[{k:'LINK',name:'Chainlink',ex:'BINANCE 선물',tv:'BINANCE:LINKUSDT.P',t:'bn',s:'LINKUSDT',dec:3,builtin:1},{k:'TQQQ',name:'ProShares UltraPro QQQ',ex:'NASDAQ',tv:'NASDAQ:TQQQ',t:'us',y:'TQQQ',nv:'worldstock/stock/TQQQ.O',builtin:1}];
+ let saved=[];try{saved=JSON.parse(localStorage.getItem('bh-tv-wl2')||'[]')}catch(e){}
+ for(const d of base){regSym(d);ensureDaily(d.k).then(renderWatch).catch(()=>{})}for(const d of saved){ADDED.push(d);regSym(d);ensureDaily(d.k).then(renderWatch).catch(()=>{})}pollExtra()}
+/* ===== 트뷰에서 옮긴 작도 ===== */
+let TVD={};fetch('tvdraw.json').then(r=>r.json()).then(j=>{TVD=j;dirty=true}).catch(()=>{});
+function drawTV(pw,ph){const L=TVD[cur];if(!L||ST.layers.tv===false)return;const dec=DATA.sym[cur].dec;
+ for(const o of L){if(o.hid&&!ST.layers.tvhid)continue;const col=o.c||'#2962ff',P=o.p.map(q=>({x:X(q[0]),y:Y(q[1]),p:q[1]}));if(P.some(q=>q.x==null||q.y==null))continue;
+  ctx.strokeStyle=col;ctx.lineWidth=o.w||1;dash(o.s||0);const a=P[0],b=P[1];
+  if(o.k==='l'&&b){let s=a,e=b;if(o.x&&o.x.includes('R'))e=rayEnd(a,b,pw);if(o.x&&o.x.includes('L'))s=rayEnd(b,a,pw);ctx.beginPath();ctx.moveTo(s.x,s.y);ctx.lineTo(e.x,e.y);ctx.stroke()}
+  else if(o.k==='h'){ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(pw,a.y);ctx.stroke();if(o.tx)label(pw-6,a.y-4,o.tx,col,'right');tag(a.y,a.p,col,pw)}
+  else if(o.k==='r'&&b){if(o.bg){ctx.fillStyle=o.bg+'26';ctx.fillRect(a.x,a.y,b.x-a.x,b.y-a.y)}ctx.strokeRect(a.x,a.y,b.x-a.x,b.y-a.y);if(o.tx)label(Math.min(a.x,b.x)+4,Math.min(a.y,b.y)+14,o.tx,col,'left','alphabetic')}
+  else if(o.k==='t'&&o.tx){dash(0);ctx.font='12px -apple-system,"Noto Sans KR",sans-serif';const lines=o.tx.length>60?o.tx.match(/.{1,60}(\s|$)/g):[o.tx],w=Math.max(...lines.map(s=>ctx.measureText(s).width))+8;
+   if(o.bg){ctx.fillStyle=o.bg+(o.bg==='#212121'?'d9':'4d');ctx.fillRect(a.x-2,a.y-14,w,lines.length*15+4)}lines.forEach((s,i)=>label(a.x+2,a.y+i*15,s.trim(),col,'left','alphabetic','12px -apple-system,"Noto Sans KR",sans-serif'))}
+  else if(o.k==='f'&&b){const x0=Math.min(a.x,b.x);ctx.lineWidth=1;dash(0);for(const f of [0,0.236,0.382,0.5,0.618,0.786,1]){const p=b.p+(a.p-b.p)*f,y=Y(p);if(y==null)continue;ctx.strokeStyle=['#787b86','#f23645','#ff9800','#4caf50','#089981','#00bcd4','#787b86'][[0,0.236,0.382,0.5,0.618,0.786,1].indexOf(f)];ctx.beginPath();ctx.moveTo(x0,y);ctx.lineTo(pw,y);ctx.stroke();label(x0+4,y-3,`${f} (${fmt(p,dec)})`,ctx.strokeStyle)}dash(2);ctx.strokeStyle='#787b86';ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);ctx.stroke()}
+  else if(o.k==='u'){ctx.fillStyle=col;ctx.beginPath();ctx.moveTo(a.x,a.y+4);ctx.lineTo(a.x-6,a.y+14);ctx.lineTo(a.x+6,a.y+14);ctx.closePath();ctx.fill();if(o.tx)label(a.x,a.y+28,o.tx,col,'center','alphabetic')}
+  else if(o.k==='g'&&b){ctx.fillStyle='#2962ff22';ctx.fillRect(a.x,a.y,b.x-a.x,b.y-a.y);dash(0);ctx.strokeStyle='#2962ff';ctx.beginPath();ctx.moveTo((a.x+b.x)/2,a.y);ctx.lineTo((a.x+b.x)/2,b.y);ctx.stroke();label((a.x+b.x)/2,Math.min(a.y,b.y)-6,`${fmt(b.p-a.p,dec)} (${((b.p/a.p-1)*100).toFixed(2)}%)`,'#2962ff','center','alphabetic')}}
+ dash(0)}
+
 window.__live=()=>({sec:DATA.sym.SEC.bars.slice(-1)[0],btc:DATA.sym.BTC.bars.slice(-1)[0],ex:DATA.sym.BTC.ex,upd:document.querySelector('#upd').textContent,cur,last:bars[lastIdx]});
-async function startLive(){liveStatus();const ks=Object.keys(BN).filter(k=>DATA.sym[k]);let kind=null;for(const k of ks){const r=await bnHistory(k);kind=kind||r}
+async function startLive(){initAdded();liveStatus();const ks=Object.keys(BN).filter(k=>DATA.sym[k]);let kind=null;for(const k of ks){const r=await bnHistory(k);kind=kind||r}
  bnSocket(kind||'f',0);pollStocks()}
 
 fetch('data.json').then(r=>r.json()).then(d=>{DATA=d;$('#upd').textContent='작성 '+d.updated;buildChart();renderWatch();syncUI();
