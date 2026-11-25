@@ -96,7 +96,7 @@ footer .sp{flex:1}
  <header>
   <button class="tb sym" data-pop="pSym" id="bSym">NDX</button>
   <span class="sep"></span>
-  <button class="tb iv on" data-iv="D">1D</button><button class="tb iv" data-iv="W">1W</button><button class="tb iv" data-iv="M">1M</button>
+  <button class="tb iv" data-iv="1m">1분</button><button class="tb iv" data-iv="5m">5분</button><button class="tb iv" data-iv="15m">15분</button><button class="tb iv" data-iv="1h">1시간</button><button class="tb iv" data-iv="4h">4시간</button><button class="tb iv on" data-iv="D">1D</button><button class="tb iv" data-iv="W">1W</button><button class="tb iv" data-iv="M">1M</button>
   <span class="sep"></span>
   <button class="tb" data-pop="pType" id="bType">캔들</button>
   <button class="tb" data-pop="pInd" id="bInd">지표</button>
@@ -189,7 +189,10 @@ function futureDates(last,end,mode,k){const out=[];let d=last;for(let g=0;g<800;
   else if(mode==='W')d=addDays(d,7);else{const x=new Date(d+'T00:00:00Z');x.setUTCMonth(x.getUTCMonth()+1);d=x.toISOString().slice(0,10)}
   if(d>end)break;out.push(d)}return out}
 function idxOf(t){let lo=0,hi=dates.length-1;if(t<=dates[0])return 0;if(t>=dates[hi])return hi;while(lo<hi){const m=(lo+hi+1)>>1;if(dates[m]<=t)lo=m;else hi=m-1}return lo}
-const X=t=>chart.timeScale().logicalToCoordinate(idxOf(t)),Y=p=>main.priceToCoordinate(p);
+const TF={'1m':60,'5m':300,'15m':900,'1h':3600,'4h':14400},IVN={'1m':'1분','5m':'5분','15m':'15분','1h':'1시간','4h':'4시간',D:'1D',W:'1W',M:'1M'},intra=()=>!!TF[iv];
+const tnorm=t=>{if(intra())return typeof t==='string'?Date.parse(t.slice(0,10)+'T00:00:00Z')/1000:t;return typeof t==='number'?new Date(t*1000).toISOString().slice(0,10):t};
+const fmtT=t=>typeof t==='number'?new Date(t*1000).toISOString().slice(0,16).replace('T',' '):t;
+const X=t=>{t=tnorm(t);if(intra()&&t>dates[dates.length-1])return null;return chart.timeScale().logicalToCoordinate(idxOf(t))},Y=p=>main.priceToCoordinate(p);
 const sma=(a,n)=>{const o=[];for(let i=0;i<a.length;i++){let s=0,ok=i>=n-1;if(ok)for(let j=i-n+1;j<=i;j++){if(a[j]==null){ok=false;break}s+=a[j]}o.push(ok?s/n:null)}return o};
 const ema=(a,n)=>{const o=[],k=2/(n+1);let e=null,s=0,c=0;for(let i=0;i<a.length;i++){if(a[i]==null){o.push(null);continue}if(e==null){s+=a[i];c++;if(c===n){e=s/n;o.push(e)}else o.push(null)}else{e=a[i]*k+e*(1-k);o.push(e)}}return o};
 const roll=(a,n,f)=>a.map((_,i)=>i>=n-1?f(a.slice(i-n+1,i+1)):null);
@@ -237,7 +240,7 @@ function rebuild(keep){
  if(I.don)ln('don','20봉 채널',[roll(Hh,20,w=>Math.max(...w)),roll(Ll,20,w=>Math.min(...w))],[c.mute,c.mute],0,d,{lineWidth:1,lineStyle:2});
  if(I.chand){const a=sma(trArr(),22),hh=roll(Hh,22,w=>Math.max(...w));ln('chand','샹들리에 3×ATR22',[hh.map((v,i)=>v==null||a[i]==null?null:v-3*a[i])],col('chand'),0,d,{lineStyle:2})}
  if(I.ichi){const mid=n=>bars.map((_,i)=>i>=n-1?(Math.max(...Hh.slice(i-n+1,i+1))+Math.min(...Ll.slice(i-n+1,i+1)))/2:null);ln('ichi','일목 전환/기준',[mid(9),mid(26)],['#2962ff','#ef6c00'],0,d,{lineWidth:1})}
- for(const k of cmp){const o=DATA.sym[k];if(!o)continue;const m=new Map(aggregate(o.bars,iv).map(b=>[b.time,b.close]));ln('cmp:'+k,k,[bars.map(b=>m.has(b.time)?m.get(b.time):null)],COLORS[(DATA.order.indexOf(k)+1)%6],0,o.dec,{lineWidth:2})}
+ for(const k of (intra()?[]:cmp)){const o=DATA.sym[k];if(!o)continue;const m=new Map(aggregate(o.bars,iv).map(b=>[b.time,b.close]));ln('cmp:'+k,k,[bars.map(b=>m.has(b.time)?m.get(b.time):null)],COLORS[(DATA.order.indexOf(k)+1)%6],0,o.dec,{lineWidth:2})}
  let p=0;const d2=Math.max(d,2);
  if(I.rsi){p++;const s=ln('rsi','RSI 14',[rsi(C,14)],col('rsi'),p,2)[0];for(const v of [70,30])s.createPriceLine({price:v,color:c.mute,lineWidth:1,lineStyle:2,axisLabelVisible:false})}
  if(I.macd){p++;const e12=ema(C,12),e26=ema(C,26),m=e12.map((v,i)=>v==null||e26[i]==null?null:v-e26[i]),sg=ema(m,9);
@@ -251,19 +254,24 @@ function rebuild(keep){
  if(ps.length>1){const n=ps.length-1,share=Math.max(0.5,0.8-0.08*n);try{for(let i=1;i<ps.length;i++)ps[i].setStretchFactor(1);ps[0].setStretchFactor(n*share/(1-share))}catch(e){}}
  chart.priceScale('right',0).applyOptions({mode:cmp.length?2:ST.scale});for(let i=1;i<ps.length;i++){try{chart.priceScale('right',i).applyOptions({mode:0})}catch(e){}}
  if(r)chart.timeScale().setVisibleLogicalRange(r);legend(null);renderTab();dirty=true}
+function buildView(){const S=DATA.sym[cur];if(intra()){const A=(INTRA[cur+'|'+iv]||{bars:[]}).bars,st=TF[iv];bars=A.map(r=>({time:r[0],open:r[1],high:r[2],low:r[3],close:r[4],vol:r[5]}));const l=bars.length?bars[bars.length-1].time:0,fut=[];for(let i=1;i<=80;i++)fut.push(l+st*i);dates=bars.map(b=>b.time).concat(fut)}
+ else{bars=aggregate(S.bars,iv);const fut=futureDates(bars[bars.length-1].time,S.future,iv,cur);dates=bars.map(b=>b.time).concat(fut)}lastIdx=bars.length-1}
 function load(k,keepRange){
+ if(intra()&&!(INTRA[k+'|'+iv]&&INTRA[k+'|'+iv].bars.length)){cur=k;$('#bSym').textContent=k;$('#legend').textContent=IVN[iv]+' 불러오는 중…';const want=iv;
+  fetchIntra(k,want).then(a=>{if(!a.length)throw '데이터 없음';INTRA[k+'|'+want]={bars:a};if(cur===k&&iv===want)load(k,keepRange)}).catch(e=>{if(cur===k&&iv===want)$('#legend').textContent=IVN[want]+' 데이터를 불러오지 못했습니다 ('+e+')'});return}
+ chart.applyOptions({timeScale:{timeVisible:intra(),secondsVisible:false}});
  cur=k;const S=DATA.sym[k];cmp=cmp.filter(x=>x!==k);sel=-1;meas=null;pending=null;
- bars=aggregate(S.bars,iv);const fut=futureDates(bars[bars.length-1].time,S.future,iv,k);dates=bars.map(b=>b.time).concat(fut);lastIdx=bars.length-1;
+ buildView();
  $('#bSym').textContent=k;document.title=k+' · 병훈 차트 플랜';
  $$('.wl li').forEach(li=>li.classList.toggle('sel',li.dataset.k===k));
- chart.priceScale('right',0).applyOptions({autoScale:true});rebuild(false);syncAuto();if(!keepRange)setRange(iv==='D'?(k==='NDX'?190:150):iv==='W'?120:60);buildPops()}
+ chart.priceScale('right',0).applyOptions({autoScale:true});rebuild(false);syncAuto();if(!keepRange)setRange(intra()?150:iv==='D'?(k==='NDX'?190:150):iv==='W'?120:60);buildPops();startIntraLive()}
 function setRange(n){const fut=dates.length-1-lastIdx,from=n?Math.max(0,lastIdx-n):0;
  chart.timeScale().setVisibleLogicalRange({from,to:lastIdx+Math.min(fut,cur==='NDX'&&iv==='D'?130:Math.max(12,Math.round((lastIdx-from)*0.15)))+2})}
 function legend(i){
  const S=DATA.sym[cur];if(i==null)i=lastIdx;const b=bars[i];if(!b)return;hoverIdx=i;
  const p=bars[i-1]?bars[i-1].close:b.open,ch=b.close-p,pc=ch/p*100,cl=ch>=0?'up':'dn',d=S.dec;
  const rows=LEG.filter(l=>l.pane===0).map(l=>`<div class="ir"><span style="color:${esc(l.color[0])}">${esc(l.name)} ${l.parts.map((v,j)=>`<b style="color:${esc(l.color[j]||l.color[0])}">${l.dec<0?fmtVol(v[i]||0):fmt(v[i],l.dec)}</b>`).join(' ')}</span><button data-rm="${esc(l.key)}" title="제거" aria-label="${esc(l.name)} 제거">×</button></div>`).join('');
- $('#legend').innerHTML=`<div><span class="t"><b>${esc(S.name)}</b> · ${iv==='D'?'1D':iv==='W'?'1W':'1M'} · ${esc(S.ex)}${ST.type==='ha'?' · 하이킨 아시':''}</span>
+ $('#legend').innerHTML=`<div><span class="t"><b>${esc(S.name)}</b> · ${IVN[iv]} · ${esc(S.ex)}${ST.type==='ha'?' · 하이킨 아시':''}</span>
  <span class="k">시</span><b class="${cl}">${fmt(b.open,d)}</b><span class="k">고</span><b class="${cl}">${fmt(b.high,d)}</b><span class="k">저</span><b class="${cl}">${fmt(b.low,d)}</b><span class="k">종</span><b class="${cl}">${fmt(b.close,d)}</b>
  <b class="${cl}" style="margin-left:6px">${ch>=0?'+':''}${fmt(ch,d)} (${ch>=0?'+':''}${pc.toFixed(2)}%)</b></div>${rows}`;
  if(tab==='data')renderTab()}
@@ -314,11 +322,11 @@ function draw(){
  TQ=[];ctx.save();ctx.beginPath();ctx.rect(0,0,pw,ph);ctx.clip();
  if(Ly.box)for(const r of D.rects){const x1=X(r.t1),x2=r.t2?X(r.t2):X(dates[dates.length-1]),y1=Y(r.p1),y2=Y(r.p2);if([x1,x2,y1,y2].some(v=>v==null))continue;
    if(r.fill){ctx.fillStyle=r.fill;ctx.fillRect(x1,y1,x2-x1,y2-y1)}ctx.strokeStyle=r.color;ctx.lineWidth=1;dash(r.dash?2:0);ctx.strokeRect(x1,y1,x2-x1,y2-y1);label(x1+4,Math.min(y1,y2)+14,r.label,r.fill?'#26a69a':c.ink,'left','alphabetic')}
- if(Ly.paths)for(const p of D.paths){ctx.strokeStyle=p.color;ctx.lineWidth=1.6;dash(p.dash?2:0);ctx.beginPath();let ok=false,lx,ly;
+ if(Ly.paths&&!intra())for(const p of D.paths){ctx.strokeStyle=p.color;ctx.lineWidth=1.6;dash(p.dash?2:0);ctx.beginPath();let ok=false,lx,ly;
    for(const [t,v] of p.pts){const x=X(t),y=Y(v);if(x==null||y==null)continue;if(!ok){ctx.moveTo(x,y);ok=true}else ctx.lineTo(x,y);lx=x;ly=y}ctx.stroke();if(ok&&pw>=520)label(Math.min(lx,pw-6),ly-4,p.label,p.color,'right')}
  if(Ly.levels){const hs=[];for(const h of D.hlines){const x=Math.max(0,X(h.t)),y=Y(h.p);if(y==null||y<0||y>ph)continue;ctx.strokeStyle=h.color;ctx.lineWidth=h.style===0?1.5:1;dash(h.style);ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(pw,y);ctx.stroke();hs.push({h,y})}
   hs.sort((a,b)=>a.y-b.y);let ly=-99,ty=-99;for(const o of hs){const yl=Math.max(o.y-3,ly+14);ly=yl;label(pw-6,yl,o.h.label,o.h.color,'right');const yt=Math.max(o.y,ty+16);ty=yt;tag(yt,o.h.p,o.h.color,pw)}}
- if(Ly.count)for(const l of D.labels){const x=X(l.t),y=Y(l.p);if(x==null||y==null)continue;label(x,l.pos==='a'?y-6:y+6,l.text,c.wave,'center',l.pos==='a'?'bottom':'top','bold 15px -apple-system,"Noto Sans KR",sans-serif')}
+ if(Ly.count&&!intra())for(const l of D.labels){const x=X(l.t),y=Y(l.p);if(x==null||y==null)continue;label(x,l.pos==='a'?y-6:y+6,l.text,c.wave,'center',l.pos==='a'?'bottom':'top','bold 15px -apple-system,"Noto Sans KR",sans-serif')}
  (mine[cur]||[]).forEach((o,n)=>drawMine(o,pw,ph,n===sel));
  if(pending&&hover){const a={x:X(pending.t),y:Y(pending.p)};if(a.x!=null&&a.y!=null){if(tool==='measure')drawMeasure(pending,ptFrom(hover),pw);else{ctx.strokeStyle=ST.color;ctx.lineWidth=1.5;dash(0);if(tool==='rect')ctx.strokeRect(a.x,a.y,hover.x-a.x,hover.y-a.y);else{ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(hover.x,hover.y);ctx.stroke()}}}}
  if(meas)drawMeasure(meas.a,meas.b,pw);
@@ -328,7 +336,7 @@ function draw(){
  for(const t of dn){const y=Math.max(t[0],lim);lim=y+16;if(y<ph+8)tag(y,t[1],t[2],t[3])}}
 function drawMeasure(a,b,pw){if(b.p==null)return;const x1=X(a.t),y1=Y(a.p),x2=X(b.t),y2=Y(b.p);if([x1,y1,x2,y2].some(v=>v==null))return;const up=b.p>=a.p,col=up?'#2962ff':'#ef5350',S=DATA.sym[cur];
  ctx.fillStyle=col+'26';ctx.fillRect(x1,y1,x2-x1,y2-y1);ctx.strokeStyle=col;ctx.lineWidth=1;dash(0);ctx.strokeRect(x1,y1,x2-x1,y2-y1);
- const n=idxOf(b.t)-idxOf(a.t),days=Math.round((new Date(b.t)-new Date(a.t))/864e5),t1=`${fmt(b.p-a.p,S.dec)} (${((b.p/a.p-1)*100).toFixed(2)}%)`,t2=`${n}봉, ${days}일`;
+ const n=idxOf(tnorm(b.t))-idxOf(tnorm(a.t)),days=Math.round((typeof a.t==='number'?(b.t-a.t)*1000:new Date(b.t)-new Date(a.t))/864e5),t1=`${fmt(b.p-a.p,S.dec)} (${((b.p/a.p-1)*100).toFixed(2)}%)`,t2=`${n}봉, ${days}일`;
  ctx.font='12px sans-serif';const w=Math.max(ctx.measureText(t1).width,ctx.measureText(t2).width)+16,cx=Math.max(w/2+4,Math.min(pw-w/2-4,(x1+x2)/2)),cy=up?Math.min(y1,y2)-44:Math.max(y1,y2)+8;
  ctx.fillStyle=col;ctx.fillRect(cx-w/2,cy,w,38);label(cx,cy+16,t1,'#fff','center','alphabetic');label(cx,cy+32,t2,'#fff','center','alphabetic')}
 function drawMine(o,pw,ph,isSel){const col=o.c||'#2962ff',{a,b}=G(o);if(a.x==null||a.y==null)return;ctx.strokeStyle=col;ctx.lineWidth=isSel?2.5:1.5;dash(0);const pts=[a];
@@ -353,7 +361,7 @@ function renderTab(){const S=DATA.sym[cur],d=S.dec,el=$('#detail'),last=S.bars[S
  const src=`<div class="src">마지막 봉 ${esc(last[0])}${crypto7(cur)?' (오늘 봉은 진행 중)':''} · 작성 ${esc(DATA.updated)} · 데이터: ${crypto7(cur)?'바이낸스 일봉(UTC 마감) 실시간':'과거 Yahoo Finance, 오늘 봉 네이버 시세'} · 경로 선은 예측이 아니라 시나리오 가정 · 참고용이며 투자 자문 아님</div>`;
  if(tab==='plan')el.innerHTML=`<h3>${esc(cur)} 플랜 · ${esc(S.tv)}</h3><ol>${S.plan.map(x=>`<li>${esc(x)}</li>`).join('')}</ol>
   <div class="lg"><span><i style="background:#26a69a"></i>박스 매수 구간</span><span><i style="background:#d50000"></i>손절</span><span><i style="background:#2962ff"></i>목표</span><span><i style="background:#ab47bc"></i>확인·무효화</span><span><i style="background:#ff9800"></i>돌파선</span><span><i style="background:#ef5350"></i>하락 시나리오</span></div>${src}`;
- else if(tab==='data'){const i=hoverIdx==null?lastIdx:hoverIdx,b=bars[i],p=bars[i-1]?bars[i-1].close:b.open,R=[['날짜',esc(b.time)],['시가',fmt(b.open,d)],['고가',fmt(b.high,d)],['저가',fmt(b.low,d)],['종가',fmt(b.close,d)],['등락',`${((b.close/p-1)*100).toFixed(2)}%`],['거래량',fmtVol(b.vol)]];
+ else if(tab==='data'){const i=hoverIdx==null?lastIdx:hoverIdx,b=bars[i],p=bars[i-1]?bars[i-1].close:b.open,R=[['날짜',esc(fmtT(b.time))],['시가',fmt(b.open,d)],['고가',fmt(b.high,d)],['저가',fmt(b.low,d)],['종가',fmt(b.close,d)],['등락',`${((b.close/p-1)*100).toFixed(2)}%`],['거래량',fmtVol(b.vol)]];
   for(const l of LEG)if(l.key!=='vol')R.push([esc(l.name),l.parts.map(v=>l.dec<0?fmtVol(v[i]||0):fmt(v[i],l.dec)).join(' / ')]);
   if(i>=20){const w=bars.slice(i-19,i+1),h=Math.max(...w.map(x=>x.high)),l=Math.min(...w.map(x=>x.low)),a=sma(trArr(),14)[i],hi=Math.max(...bars.slice(Math.max(0,i-251),i+1).map(x=>x.close));
    R.push(['20봉 고가 / 저가',fmt(h,d)+' / '+fmt(l,d)],['박스 안 위치',((b.close-l)/(h-l||1)*100).toFixed(1)+'%'],['ATR 14 (종가 대비)',fmt(a,d)+' ('+(a/b.close*100).toFixed(1)+'%)'],['252봉 고점 대비',((b.close/hi-1)*100).toFixed(1)+'%'])}
@@ -393,10 +401,10 @@ $('#t_fit').addEventListener('click',()=>chart.timeScale().fitContent());
 $('#t_trash').addEventListener('click',e=>{const b=e.currentTarget;if(b.dataset.c!=='1'){b.dataset.c='1';b.style.color='var(--down)';hint('휴지통을 한 번 더 누르면 이 종목의 내 그림이 모두 삭제됩니다');setTimeout(()=>{b.dataset.c='';b.style.color='';if(tool==='cursor')hint('')},2600);return}mine[cur]=[];sel=-1;saveMine();b.dataset.c='';b.style.color='';hint('');dirty=true;renderTab()});
 function syncUI(){applyInteract();$('#t_magnet').classList.toggle('on',!!ST.magnet);$('#app').classList.toggle('nopanel',!ST.panel);$$('.sc').forEach(b=>b.classList.toggle('on',ST.scale===+b.dataset.m))}
 $$('.iv').forEach(b=>b.addEventListener('click',()=>{iv=b.dataset.iv;$$('.iv').forEach(x=>x.classList.toggle('on',x===b));load(cur)}));
-$$('.rg').forEach(b=>b.addEventListener('click',()=>{const n=+b.dataset.r;setRange(iv==='D'?n:iv==='W'?Math.ceil(n/5):Math.ceil(n/21))}));
+$$('.rg').forEach(b=>b.addEventListener('click',()=>{const n=+b.dataset.r;setRange(intra()?Math.round(n*(BN[cur]?86400:23400)/TF[iv]):iv==='D'?n:iv==='W'?Math.ceil(n/5):Math.ceil(n/21))}));
 $$('.sc').forEach(b=>b.addEventListener('click',()=>{const m=+b.dataset.m;ST.scale=ST.scale===m?0:m;saveST();chart.priceScale('right',0).applyOptions({mode:cmp.length?2:ST.scale});syncUI();dirty=true}));
 $('#bAuto').addEventListener('click',()=>{chart.priceScale('right',0).applyOptions({autoScale:true});syncAuto();dirty=true});
-$('#bReset').addEventListener('click',()=>{chart.priceScale('right',0).applyOptions({autoScale:true});setRange(iv==='D'?(cur==='NDX'?190:150):iv==='W'?120:60);syncAuto();dirty=true});
+$('#bReset').addEventListener('click',()=>{chart.priceScale('right',0).applyOptions({autoScale:true});setRange(intra()?150:iv==='D'?(cur==='NDX'?190:150):iv==='W'?120:60);syncAuto();dirty=true});
 $('#bLock').addEventListener('click',()=>{ST.lock=!ST.lock;saveST();applyInteract()});
 $('#chart').addEventListener('pointerup',()=>setTimeout(syncAuto,50));$('#chart').addEventListener('wheel',()=>setTimeout(syncAuto,50),{passive:true});
 $('#bUndo').addEventListener('click',()=>delMine((mine[cur]||[]).length-1));
@@ -420,9 +428,9 @@ function mergeBars(k,arr){const S=DATA.sym[k];if(!S||!arr||!arr.length)return fa
  if(ch){LIVE.dirty=LIVE.dirty||new Set();LIVE.dirty.add(k);schedLive()}return ch}
 let liveT=null,liveLast=0;
 function schedLive(){if(liveT)return;const wait=Math.max(0,1500-(Date.now()-liveLast));liveT=setTimeout(applyLive,wait)}
-function applyLive(){liveT=null;if(pending){liveT=setTimeout(applyLive,800);return}liveLast=Date.now();const D=LIVE.dirty;LIVE.dirty=null;if(!D)return;
- try{renderWatch();$$('.wl li').forEach(li=>li.classList.toggle('sel',li.dataset.k===cur))}catch(e){}
- if(D.has(cur)||cmp.some(k=>D.has(k))){const S=DATA.sym[cur];bars=aggregate(S.bars,iv);const fut=futureDates(bars[bars.length-1].time,S.future,iv,cur);dates=bars.map(b=>b.time).concat(fut);lastIdx=bars.length-1;rebuild(true);if(hoverIdx==null)legend(null)}
+function applyLive(){liveT=null;if(pending){liveT=setTimeout(applyLive,800);return}liveLast=Date.now();const D=LIVE.dirty,ID=LIVE.idirty;LIVE.dirty=null;LIVE.idirty=false;if(!D&&!ID)return;
+ try{if(D)renderWatch();$$('.wl li').forEach(li=>li.classList.toggle('sel',li.dataset.k===cur))}catch(e){}
+ if(intra()?ID:D&&(D.has(cur)||cmp.some(k=>D.has(k)))){buildView();rebuild(true);if(hoverIdx==null)legend(null)}
  liveStatus()}
 function liveStatus(){const t=new Date().toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit',second:'2-digit'});const a=[];
  a.push(LIVE.bn==='ws'?'코인 바이낸스 실시간':LIVE.bn==='rest'?'코인 바이낸스(갱신 중)':'코인 연결 중');
@@ -444,6 +452,30 @@ async function pollStocks(){const px=proxyURL();let ok=false;
  if(!ok){try{const r=await fetch(quotesURL()+'?t='+Math.floor(Date.now()/60000));if(r.ok){const j=await r.json();for(const k in j.bars||{})mergeBars(k,j.bars[k]);LIVE.st='네이버 '+(j.updated||'')+' 기준(약 5~15분 지연)'}}catch(e){}}
  liveStatus();clearTimeout(LIVE.pt);LIVE.pt=setTimeout(pollStocks,px&&ok?(document.hidden?30000:1000):60000)}
 document.addEventListener('visibilitychange',()=>{if(!document.hidden&&proxyURL()){clearTimeout(LIVE.pt);pollStocks()}});
+/* ===== 분봉·시간봉 ===== */
+const INTRA={},USY={NDX:'^NDX',SNDK:'SNDK'},KRN={KOSPI:['index','KOSPI','^KS11'],SEC:['item','005930','005930.KS'],SKH:['item','000660','000660.KS']};
+const PX=u=>proxyURL().replace(/\/$/,'')+'/?u='+encodeURIComponent(u);
+function aggTF(rows,sec){const m=new Map();for(const r of rows){const k=Math.floor(r[0]/sec)*sec,b=m.get(k);if(!b)m.set(k,[k,r[1],r[2],r[3],r[4],r[5]]);else{b[2]=Math.max(b[2],r[2]);b[3]=Math.min(b[3],r[3]);b[4]=r[4];b[5]+=r[5]}}return [...m.values()].sort((a,b)=>a[0]-b[0])}
+async function yahooTF(sym,tf){const itv={'1m':'1m','5m':'5m','15m':'15m','1h':'60m','4h':'60m'}[tf],rg={'1m':'5d','5m':'1mo','15m':'1mo','1h':'1y','4h':'2y'}[tf];
+ const j=await (await fetch(PX(`https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(sym)}?interval=${itv}&range=${rg}`))).json(),r=j.chart.result[0],t=r.timestamp||[],q=r.indicators.quote[0],o=[];
+ for(let i=0;i<t.length;i++){if(q.close[i]==null||q.open[i]==null)continue;o.push([t[i]+32400,q.open[i],q.high[i],q.low[i],q.close[i],q.volume[i]||0])}return tf==='4h'?aggTF(o,14400):o}
+const kst=ms=>new Date(ms+324e5).toISOString().replace(/[-:T]/g,'').slice(0,12);
+async function naverTF(k,period,days){const [kind,code]=KRN[k],now=Date.now(),u=`https://api.stock.naver.com/chart/domestic/${kind}/${code}/${period}?startDateTime=${kst(now-days*864e5).slice(0,8)}0000&endDateTime=${kst(now).slice(0,8)}2359`;
+ const a=await (await fetch(PX(u))).json();return a.map(x=>{const s=x.localDateTime;return [Date.UTC(+s.slice(0,4),+s.slice(4,6)-1,+s.slice(6,8),+s.slice(8,10),+s.slice(10,12))/1000,x.openPrice,x.highPrice,x.lowPrice,x.currentPrice,(x.accumulatedTradingVolume||0)/(k==='KOSPI'?1000:1)]})}
+async function fetchIntra(k,tf){
+ if(BN[k]){for(const u of [`https://fapi.binance.com/fapi/v1/klines?symbol=${BN[k]}&interval=${tf}&limit=1500`,`https://data-api.binance.vision/api/v3/klines?symbol=${BN[k]}&interval=${tf}&limit=1000`]){try{const r=await fetch(u);if(!r.ok)continue;return (await r.json()).map(x=>[x[0]/1000+32400,+x[1],+x[2],+x[3],+x[4],+x[5]])}catch(e){}}throw '바이낸스 연결 실패'}
+ if(USY[k])return yahooTF(USY[k],tf);
+ if(KRN[k]){if(TF[tf]<=900)return naverTF(k,{'1m':'minute','5m':'minute5','15m':'minute15'}[tf],14);
+  let y=[];try{y=await yahooTF(KRN[k][2],'1h')}catch(e){}let nv=[];try{nv=await naverTF(k,'minute60',14)}catch(e){}
+  const m=new Map(y.map(r=>[r[0],r]));for(const r of nv)m.set(r[0],r);const rows=[...m.values()].sort((a,b)=>a[0]-b[0]);return tf==='4h'?aggTF(rows,14400):rows}
+ throw '지원하지 않는 종목'}
+function mergeIntra(key,rows){const c=INTRA[key];if(!c)return;const A=c.bars;for(const r of rows){const L=A[A.length-1];if(L&&L[0]===r[0])A[A.length-1]=r;else if(!L||r[0]>L[0])A.push(r)}if(key===cur+'|'+iv){LIVE.idirty=true;schedLive()}}
+let IWS=null,ITM=null;
+function startIntraLive(){if(IWS){IWS.onclose=null;try{IWS.close()}catch(e){}IWS=null}clearInterval(ITM);if(!intra())return;const k=cur,tf=iv,key=k+'|'+tf;
+ if(BN[k]){try{IWS=new WebSocket(`wss://fstream.binance.com/ws/${BN[k].toLowerCase()}@kline_${tf}`);IWS.onmessage=e=>{try{const x=JSON.parse(e.data).k;if(x)mergeIntra(key,[[x.t/1000+32400,+x.o,+x.h,+x.l,+x.c,+x.v]])}catch(err){}};
+  IWS.onclose=()=>{if(cur===k&&iv===tf)setTimeout(startIntraLive,3000)}}catch(e){}}
+ else ITM=setInterval(()=>{if(document.hidden)return;fetchIntra(k,tf).then(a=>{if(a.length&&INTRA[key]){INTRA[key].bars=a;if(cur===k&&iv===tf){LIVE.idirty=true;schedLive()}}}).catch(()=>{})},3000)}
+
 window.__live=()=>({sec:DATA.sym.SEC.bars.slice(-1)[0],btc:DATA.sym.BTC.bars.slice(-1)[0],ex:DATA.sym.BTC.ex,upd:document.querySelector('#upd').textContent,cur,last:bars[lastIdx]});
 async function startLive(){liveStatus();const ks=Object.keys(BN).filter(k=>DATA.sym[k]);let kind=null;for(const k of ks){const r=await bnHistory(k);kind=kind||r}
  bnSocket(kind||'f',0);pollStocks()}
