@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>차트 플랜</title>
+<title>병훈 차트 플랜</title>
 <style>
 /* VOICE: 트레이더 작업 화면. 장식 없이 차트가 전부
    IDEA: 트레이딩뷰 차트 창 — 위 툴바, 왼쪽 그리기 도구, 아래 지표 패널, 오른쪽 관심종목·플랜·데이터
@@ -254,7 +254,7 @@ function rebuild(keep){
 function load(k,keepRange){
  cur=k;const S=DATA.sym[k];cmp=cmp.filter(x=>x!==k);sel=-1;meas=null;pending=null;
  bars=aggregate(S.bars,iv);const fut=futureDates(bars[bars.length-1].time,S.future,iv,k);dates=bars.map(b=>b.time).concat(fut);lastIdx=bars.length-1;
- $('#bSym').textContent=k;document.title=k+' · 차트 플랜';
+ $('#bSym').textContent=k;document.title=k+' · 병훈 차트 플랜';
  $$('.wl li').forEach(li=>li.classList.toggle('sel',li.dataset.k===k));
  chart.priceScale('right',0).applyOptions({autoScale:true});rebuild(false);syncAuto();if(!keepRange)setRange(iv==='D'?(k==='NDX'?190:150):iv==='W'?120:60);buildPops()}
 function setRange(n){const fut=dates.length-1-lastIdx,from=n?Math.max(0,lastIdx-n):0;
