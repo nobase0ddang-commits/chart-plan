@@ -350,8 +350,8 @@ function drawMine(o,pw,ph,isSel){const col=o.c||'#2962ff',{a,b}=G(o);if(a.x==nul
   if(o.k==='r'){ctx.fillStyle=col+'1f';ctx.fillRect(a.x,a.y,b.x-a.x,b.y-a.y);ctx.strokeRect(a.x,a.y,b.x-a.x,b.y-a.y)}
   if(o.k==='fib'){const x0=Math.min(a.x,b.x);ctx.lineWidth=1;for(const f of FIB){const p=o.b.p+(o.a.p-o.b.p)*f,y=Y(p);if(y==null)continue;ctx.globalAlpha=f===0||f===1?1:0.75;ctx.beginPath();ctx.moveTo(x0,y);ctx.lineTo(pw,y);ctx.stroke();label(x0+4,y-3,`${f} (${fmt(p,DATA.sym[cur].dec)})`,col)}ctx.globalAlpha=1;dash(1);ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);ctx.stroke();dash(0)}}
  if(isSel)for(const p of pts){ctx.fillStyle=TH().bg;ctx.strokeStyle=col;ctx.lineWidth=2;ctx.beginPath();ctx.arc(p.x,p.y,4.5,0,7);ctx.fill();ctx.stroke()}}
-function loop(){if(chart&&DATA&&main){const r=chart.timeScale().getVisibleLogicalRange(),ps=chart.panes(),s=[r&&r.from,r&&r.to,Y(bars[lastIdx].close),$('#chart').clientWidth,$('#chart').clientHeight,ps.map(p=>p.getHeight()).join(',')].join('|');
-  if(s!==sig||dirty){sig=s;dirty=false;try{draw()}catch(e){console.error(e)}}}requestAnimationFrame(loop)}
+function loop(){try{if(chart&&DATA&&main&&bars[lastIdx]){const r=chart.timeScale().getVisibleLogicalRange(),ps=chart.panes(),s=[r&&r.from,r&&r.to,Y(bars[lastIdx].close),$('#chart').clientWidth,$('#chart').clientHeight,ps.map(p=>p.getHeight()).join(',')].join('|');
+  if(s!==sig||dirty){sig=s;dirty=false;try{draw()}catch(e){console.error(e)}}}}catch(e){console.error(e)}requestAnimationFrame(loop)}
 function renderWatch(){$('#wl').innerHTML=DATA.order.map(k=>{const S=DATA.sym[k],b=S.bars,l=b[b.length-1],p=b[b.length-2],pc=(l[4]/p[4]-1)*100;
   return `<li data-k="${esc(k)}"><span><span class="n">${esc(k)}</span><span class="x">${esc(S.name)}</span></span><span class="v">${fmt(l[4],S.dec)}</span><span class="c ${pc>=0?'up':'dn'}">${pc>=0?'+':''}${pc.toFixed(2)}%</span></li>`}).join('');
  $$('.wl li').forEach(li=>li.addEventListener('click',()=>go(li.dataset.k)))}
