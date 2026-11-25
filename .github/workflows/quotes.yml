@@ -1,0 +1,27 @@
+name: quotes
+on:
+  schedule:
+    - cron: '*/5 * * * *'
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency: quotes
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: fetch quotes branch
+        run: |
+          git fetch origin quotes:quotes 2>/dev/null && git show quotes:quotes.json > /tmp/quotes.json || echo '{"bars":{}}' > /tmp/quotes.json
+      - run: python3 tools/quotes.py /tmp/quotes.json
+      - name: push to quotes branch
+        run: |
+          git config user.name quotes-bot
+          git config user.email quotes-bot@users.noreply.github.com
+          git checkout --orphan tmp-quotes
+          git rm -rfq . >/dev/null
+          cp /tmp/quotes.json quotes.json
+          git add quotes.json
+          git commit -qm "quotes $(date -u +%FT%TZ)"
+          git push -fq origin tmp-quotes:quotes
