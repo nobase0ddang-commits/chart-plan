@@ -458,7 +458,7 @@ const PX=u=>proxyURL().replace(/\/$/,'')+'/?u='+encodeURIComponent(u);
 function aggTF(rows,sec){const m=new Map();for(const r of rows){const k=Math.floor(r[0]/sec)*sec,b=m.get(k);if(!b)m.set(k,[k,r[1],r[2],r[3],r[4],r[5]]);else{b[2]=Math.max(b[2],r[2]);b[3]=Math.min(b[3],r[3]);b[4]=r[4];b[5]+=r[5]}}return [...m.values()].sort((a,b)=>a[0]-b[0])}
 async function yahooTF(sym,tf){const itv={'1m':'1m','5m':'5m','15m':'15m','1h':'60m','4h':'60m'}[tf],rg={'1m':'5d','5m':'1mo','15m':'1mo','1h':'1y','4h':'2y'}[tf];
  const j=await (await fetch(PX(`https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(sym)}?interval=${itv}&range=${rg}`))).json(),r=j.chart.result[0],t=r.timestamp||[],q=r.indicators.quote[0],o=[];
- for(let i=0;i<t.length;i++){if(q.close[i]==null||q.open[i]==null)continue;o.push([t[i]+32400,q.open[i],q.high[i],q.low[i],q.close[i],q.volume[i]||0])}return tf==='4h'?aggTF(o,14400):o}
+ for(let i=0;i<t.length;i++){if(q.close[i]==null||q.open[i]==null)continue;o.push([t[i]+32400,q.open[i],q.high[i],q.low[i],q.close[i],q.volume[i]||0])}return aggTF(o,tf==='4h'?14400:TF[tf])}
 const kst=ms=>new Date(ms+324e5).toISOString().replace(/[-:T]/g,'').slice(0,12);
 async function naverTF(k,period,days){const [kind,code]=KRN[k],now=Date.now(),u=`https://api.stock.naver.com/chart/domestic/${kind}/${code}/${period}?startDateTime=${kst(now-days*864e5).slice(0,8)}0000&endDateTime=${kst(now).slice(0,8)}2359`;
  const a=await (await fetch(PX(u))).json();return a.map(x=>{const s=x.localDateTime;return [Date.UTC(+s.slice(0,4),+s.slice(4,6)-1,+s.slice(6,8),+s.slice(8,10),+s.slice(10,12))/1000,x.openPrice,x.highPrice,x.lowPrice,x.currentPrice,(x.accumulatedTradingVolume||0)/(k==='KOSPI'?1000:1)]})}
