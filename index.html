@@ -621,7 +621,7 @@ function initAdded(){const base=[{k:'LINK',name:'Chainlink',ex:'BINANCE 선물',
  let saved=[];try{saved=JSON.parse(localStorage.getItem('bh-tv-wl2')||'[]')}catch(e){}
  for(const d of base){regSym(d);ensureDaily(d.k).then(renderWatch).catch(()=>{})}for(const d of saved){ADDED.push(d);regSym(d);ensureDaily(d.k).then(renderWatch).catch(()=>{})}pollExtra()}
 /* ===== 트뷰에서 옮긴 작도 ===== */
-let TVD={};fetch('tvdraw.json').then(r=>r.json()).then(j=>{TVD=j;dirty=true}).catch(()=>{});
+let TVD={};fetch('tvdraw.json?'+Date.now(),{cache:'no-store'}).then(r=>r.json()).then(j=>{TVD=j;dirty=true}).catch(()=>{});
 function drawTV(pw,ph){const L=TVD[cur];if(!L||ST.layers.tv===false)return;const dec=DATA.sym[cur].dec;
  for(const o of L){if(o.hid&&!ST.layers.tvhid)continue;const col=o.c||'#2962ff',P=o.p.map(q=>({x:X(q[0]),y:Y(q[1]),p:q[1]}));if(P.some(q=>q.x==null||q.y==null))continue;
   ctx.strokeStyle=col;ctx.lineWidth=o.w||1;dash(o.s||0);const a=P[0],b=P[1];
@@ -639,7 +639,7 @@ window.__live=()=>({sec:DATA.sym.SEC.bars.slice(-1)[0],btc:DATA.sym.BTC.bars.sli
 async function startLive(){initAdded();liveStatus();const ks=Object.keys(BN).filter(k=>DATA.sym[k]);let kind=null;for(const k of ks){const r=await bnHistory(k);kind=kind||r}
  bnSocket(kind||'f',0);pollStocks()}
 
-fetch('data.json').then(r=>r.json()).then(d=>{DATA=d;$('#upd').textContent='작성 '+d.updated;buildChart();renderWatch();syncUI();
+fetch('data.json?'+Date.now(),{cache:'no-store'}).then(r=>r.json()).then(d=>{DATA=d;$('#upd').textContent='작성 '+d.updated;buildChart();renderWatch();syncUI();
  const h=location.hash.slice(1).toUpperCase();load(d.sym[h]?h:'NDX');requestAnimationFrame(loop);startLive()}).catch(e=>{$('#legend').textContent='데이터를 불러오지 못했습니다: '+e});
 }
 </script>
